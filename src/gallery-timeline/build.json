@@ -1,0 +1,13 @@
+{
+    "name": "gallery-timeline",
+    "builds": {
+        "gallery-timeline": {
+            "meta": {
+                "lang ": " en, es"
+            },
+            "jsfiles": [
+                "gallery-timeline.js"
+            ]
+        }
+    }
+}

@@ -1,0 +1,10 @@
+{
+    "name"       : "gallery-flyweight-tree",
+    "displayName": "Gallery: flyweight-tree",
+    "description": "Extension to help visualize tree structures such as TreeView, Menu or even forms.",
+    "author"     : [ "satyam" ],
+
+    "tags": [ "gallery", "Flyweight pattern" ],
+
+    "examples": []
+}

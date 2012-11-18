@@ -1,0 +1,6 @@
+{
+    "gallery-md-fieldgroup": {
+        "requires": ["base-build", "widget", "widget-parent", "widget-child", "gallery-makenode"],
+        "skinnable":true
+    }
+}

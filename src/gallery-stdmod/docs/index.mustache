@@ -1,0 +1,32 @@
+<div class="intro">
+    <p>
+    A version of WidgetStdMod that has the contentBox as its BODY section
+    </p>
+</div>
+
+<h2>Description</h2>
+
+<p>When using WidgetParent along with WidgetStdMod it feels a little odd that you have to adjust where WidgetParent adds its children so that it fits them into the BODY section of the StdMod extension, which is one level down from the contentBox.  You can do that, there is the _childrenContainer property to specify that, but it still felt silly, I mean, what's the point of having the boundingBox containing the contentBox containing the three StdMod sections.  After all, you might use the HEADER section or not, you may use the FOOTER section or not, but you are unlikely not to use the BODY section which, feels quite like the most obvious container for anything, much like the contentBox is.  <br>
+<br>
+So, I created this as a subclass of WidgetStdMod and changed a few methods to make the BODY and the contentBox the same thing.   Also, unlike regular WidgetStdMod, the BODY section always exists instead of having to explicitly create it, a silly annoyance for a section that is hardly ever left empty.<br>
+<br>
+The API docs for this extension point to the one for WidgetStdMod since there is no different in the public interface.<br>
+<br>
+</p>
+
+```
+YUI().use('widget','widget-parent','gallery-stdmod', function(Y) {
+    Y.MyWidget= Y.Base.create(
+        'mywidget',
+        Y.Widget,
+        [Y.StdMod, Y.WidgetParent],
+        {
+            // instance members
+        },
+        {
+            // static members
+        }
+    });
+});
+```
+

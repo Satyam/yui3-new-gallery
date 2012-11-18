@@ -1,0 +1,6 @@
+{
+    "gallery-timeline": {
+		"requires":["node", "io-base", "base", "event-mousewheel", "event-gestures", "classnamemanager", "datatype", "event-hover"],
+		"skinnable": true
+    }
+}

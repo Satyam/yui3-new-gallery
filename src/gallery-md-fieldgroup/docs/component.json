@@ -1,0 +1,10 @@
+{
+    "name"       : "gallery-md-fieldgroup",
+    "displayName": "Gallery: md-fieldgroup",
+    "description": "Container to hold a set of InputFields",
+    "author"     : [ "satyam" ],
+
+    "tags": [ "gallery" ],
+
+    "examples": []
+}

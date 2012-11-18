@@ -1,0 +1,51 @@
+<div class="intro">
+    <p>
+    A component to display historical timeline data produced by The Timeline Project at SourceForge
+    </p>
+</div>
+
+<h2>Description</h2>
+
+<p>This component reads a historical timeline produced by the program at <a href="http://thetimelineproj.sourceforge.net/">The Timeline Project</a>.<br>
+<br>
+It only needs a container to display it on and the URL of the data file.<br>
+<br>
+You can move to a different time dragging the graph or using the mouse wheel.  You can zoom in and out by those same actions with the control-key pressed (as with the original program).<br>
+<br>
+Time bars above the horizontal divider represent ranges of dates.  Those below just spot events, they are sized to fit the text and have an arrow pointing to the exact date/time.  If the time scale grows large, range events may move beneath the line as if they were spot events since they start and end dates become indistinguishable.<br>
+<br>
+A blur in the upper-right corner indicates that the event has extra information.  You can click on the bar to have a description and perhaps an image show up.<br>
+<br>
+Fuzzy event have their edges curved.<br>
+</p>
+
+```
+YUI().use('gallery-timeline', function(Y) {
+
+// Any of these would work			
+	var timeline = new Y.Timeline({
+		container:'#canvas1',
+		url:'myOwnTimeline.xml'
+	});
+// or:				
+	var timeline1 = new Y.Timeline();
+	timeline1.render('#canvas2');
+	timeline1.load('myOwnTimeline.xml');
+//or:
+	new Y.Timeline().load('myOwnTimeline.xml').render('#canvas3');
+//or:
+	new Y.Timeline().render('#canvas4').load('myOwnTimeline.xml');
+//or:
+	new Y.Timeline({container:'#canvas5'}).load('myOwnTimeline.xml');
+
+// You can change the data set at any time.
+// You can also change the container: beware, the image of the timeline 
+// will remain in the previous container, but completely inactive
+	window.setTimeout(function () {
+		timeline.load('myOwnTimeline1.xml');
+		timeline1.set('container', '#anotherCanvas');
+	},3000);
+				
+});
+```
+

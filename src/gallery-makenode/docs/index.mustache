@@ -1,0 +1,136 @@
+<div class="intro">
+    <p>
+    An extension for Widget to make it easier to build Widgets, allowing for a more declarative style and requiring less pieces of executable code, which is makes it much clearer and simple.
+    </p>
+</div>
+
+<h2>Description</h2>
+
+<p>When MakeNode is added as an extension when defining a Widget, it will read several static protected properties and link together many pieces of code.  A Widget defined with MakeNode usually has a much simpler renderUI method than a normal Widget, quite often no bindUI or syncUI and possibly no initializer either.  The pieces of code handling the behavior of the widget are very clearly specified, each doing a very simple task.  Code size is reduced and what is left turns out to be much simpler.<br>
+<br>
+All properties and methods added by MakeNode are protected, as they are meant to be used by the developer of the widget and need not be seen by the application developer using the widget.  <br>
+<br>
+MakeNode makes it easy to:<br>
+<ul>
+<li>Define the markup of the Widget via a simple template which can have placeholders which MakeNode will fill with the values of properties, attributes, return values of methods and CSS classNames defined in the widget</li>
+<li>Create classNames by simply declaring an array of suffixes to be added to the Widget's own CSS prefix</li>
+<li>Create references to the Node elements that make up the widget by searching them by their classNames</li>
+<li>Link attributes to methods that will reflect their state in the UI</li>
+<li>Link UI events to methods that will listen to them</li>
+<li>Link global and widget events to their listeners</li>
+</ul>
+<br>
+</p>
+
+```
+Y.Something= Y.Base.create(
+    'something', 
+    Y.Widget, 
+    [Y.MakeNode], 
+    {
+
+        renderUI: function () {
+            // _makeNode will use the default _TEMPLATE property if none is provided
+            this.get('contentBox').append(this._makeNode());
+            // _locateNodes will produce properties _labelNode and _iconNode 
+            // via the CSS classNames listed in _CLASS_NAMES
+            this._locateNodes();
+        },
+        // The previous code for renderUI is so frequent that MakeNode will add it automatically
+        // if it doesn't find any explicit renderUI method in the class or the ones it inherits from.
+
+        
+        // This _uiSetXxxx methods will be called automatically when the Xxxx attribute changes.
+        // There has to be one of this for each attribute listed in _ATTRS_2_UI
+        _uiSetLabel: function (value) {
+            // _labelNode was produced by _locateNodes
+            this._labelNode.setContent(value || '');
+        },
+        _uiSetIcon: function (value) {
+            value = value || 'none';
+            
+            // MakeNode will create the hash _classNames from _CLASS_NAMES using the values 
+            // in that array as keys (for example, 'icon') and the full className as the value
+            // (for example: "yui3-something-icon").
+            var newName = this._classNames.icon + '-' + value;
+            this.get('boundingBox').replaceClass(
+                this._prevIconClassName, 
+                newName
+            );
+            this._prevIconClassName = newName;
+        },
+        
+        // These are the event listeners for the events listed below in _EVENTS.
+        // Default listeners are 'after' event listeners (Y.after) so, by default, the functions
+        // start with '_after', then the element it is bound to, with the initial capitalized
+        // and then the event type, with the initial capitalized.
+        // If a before event is set (Y.on) the listener would be, for example _beforeFormSubmit
+        // For delegated events (Y.delegate), it might be:  _delegateListItemClick
+        _afterBoundingBoxClick: function (ev) {
+        
+        },
+        _afterBoundingBoxMousedown: function (ev) {
+        
+        },
+        _afterDocumentMouseup: function (ev) {
+        
+        }
+    },
+    {
+        // This is the default template that _makeNode will use.  
+        // You can have several templates if you want any other, just pass it as the first argument to _makeNode.
+        // The placeholder {c} will use the className generated for that key in _CLASS_NAMES.
+        // The {@} placeholder will read the value of the attribute mentioned.
+        _TEMPLATE: '<span class="{c icon}"></span><span class="{c label}">{@ label}</span>',
+        
+        // MakeNode will generate classNames using ClassNameManager
+        _CLASS_NAMES: ['label','icon'],
+        
+        // MakeNode will set event listeners for nodes listed here and link each type of event 
+        // to the method whose name is listed.  Nodes are usually identified by the keys of their classNames
+        // as listed in _CLASS_NAMES.  There are also several 'virtual' nodes, such as those used here:
+        // boundingBox and document (the document the widget is in) or 
+        // THIS the widget itself and Y the Y instance for events broadcast.
+        // Event listeners are expected to comply with a naming convention but can be overridden, 
+        // along with a series of other alternatives (using before event listeners instead of after, or event delegation)
+        _EVENTS: {
+            boundingBox: ['click','mousedown' ],
+            document: 'mouseup'
+            /* Should there be a form whose submittal I might want to supervise, I might do:
+            form: {
+            	when:'before',
+            	type: 'submit'
+            }
+            */
+            /*
+            Should I want to use a particular function name, I can do that, for example, 
+            for a click on the element with the className key of icon, it would go:
+            icon: {
+            	type: 'click',
+            	fn: '_onIconClick'
+            }
+            */
+        }, 
+        ATTRS: {
+            label: {
+                value: '',
+                validator: Lang.isString
+            },
+            icon: {
+                value: null,
+                validator: function(value) {
+                    return Lang.isString(value) || Lang.isNull(value);
+                }
+            }
+        },
+        
+        // Attributes listed here will have methods named _uiSetXxxx handling any change in them.
+        _ATTRS_2_UI: {
+            BIND: ['label', 'icon'],
+            SYNC: ['label', 'icon']
+        }
+    }
+);
+
+```
+

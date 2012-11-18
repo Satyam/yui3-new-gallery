@@ -1,0 +1,5 @@
+{
+    "gallery-button-plugin": {
+        "requires":["node", "cssbutton"]
+    }
+}

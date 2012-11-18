@@ -1,0 +1,78 @@
+<div class="intro">
+    <p>
+    A TreeView widget using the Flyweight pattern for its nodes so as to save memory and improve performance.
+    It extends the classes in the gallery-flyweight-tree module.
+    </p>
+</div>
+
+<h2>Description</h2>
+
+<p>The FWTreeView inherits from `Y.FlyweightTreeManager` which is a subclass of Y.Widget and to handle the nodes, which should inherit from `Y.FlyweightTreeNode`.
+As the root, it simply provides the bounding and content boxes for the nodes, the actual handling of the tree is left to the Flyweight module.</p>
+
+<p>A tree can be created by simply providing a `tree` configuration attribute to the constructor, describing the tree.
+Further nodes can be added dynamically as the branches expand.
+Each node description may contain the following properties:</p>
+<ul>
+    <li>label: text or HTML markup to be shown in the tree node.</li>
+    <li>expanded: Signals the children of this node should be visible. (true by default).</li>
+    <li>children: an array containing further node descriptors.</li>
+    <li>id: id to assign to the outer DOM element for this node.</li>
+    <li>type: a reference to a subclass of Y.FWTreeNode or a string with the name of such a class, used to display this node.</li>
+</ul>
+<p>It supports dynamic loading of nodes and node selection.
+Versions after Nov 9th have WAI-ARIA roles and states and keyboard support.
+(the example won't show this, I'll update it as soon as the new build comes out).</p>
+<h3>Performance Data</h3>
+<p>I timed a few rendering tests using this TreeView and one based on all Widgets each augmented with WidgetParent and WidgetChild.</p>
+<p>The test was simply building a tree with a certain depth and a certain number of children per node.
+That is why the resulting number of nodes are not round numbers as they are the consequence of adding all those nodes.
+I used FireFox at first, but with the Widget-based tree, it showed the &quot;script is taking too long&quot; message with less than a couple of hundred nodes.
+In Chrome I could go to almost 800 before any complaints so I ended up using Chrome for all tests.</p>
+<p>With a Widget-based tree, it took 16.5 seconds to draw a tree with 781 nodes.
+The same tree took 1.2 seconds using the Flyweight TreeView (all averages of several runs).
+So, it is almost 14 times faster.</p>
+<p>Then I wondered, how about memory consumption?
+With the Widget-based TreeView approach and 781 nodes, Chrome simply died when trying to take the heap snapshot while 10.4MB with this TreeView.
+So I made the tree one level shallower and with 156 nodes, the Widget-based TreeView took 49MB against 6MB with this version;
+less than one eighth the memory consumption.</p>
+<p>The obvious difference is that with 156 nodes in a tree 3 levels deep,
+the Widget-based approach requires 156 Widgets,
+one for each tree-node plus one for the TreeView container.
+When using the Flyweight pattern you get  just one Widget (the overall container for the TreeView)
+and only 3 tree-node instances, one for each level of depth.
+Of course, in both cases, the markup created is the same and in the flyweight TreeView,
+there is the tree configuration object, which is a passive object for data storage, no methods, no nothing in it.</p>
+<h2>Sample usage</h2>
+```
+YUI().use('gallery-fwt-treeview', function(Y) {
+
+    (Y.FWTreeView({tree: [
+        {
+            label:'label 0',
+            children: [
+                {
+                    label: 'label 0-0',
+                    expanded: false,
+                    children: [
+                        {
+                            label: 'label 0-0-0'
+                        },
+                        {
+                            label: 'label 0-0-1',
+                        }
+                    ]
+                },
+                {
+                    label: 'label 0-1'
+                }
+            ]
+        },
+        {
+            label: 'label 1'
+        }
+        
+    ]})).render('#container');
+});
+```
+

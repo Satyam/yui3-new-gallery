@@ -1,0 +1,24 @@
+{
+    "name": "Satyam's Gallery Modules",
+    "description": "Satyam's Gallery Modules",
+    "options": {
+        "linkNatives": "true",
+        "attributesEmit": "true",
+        "paths": [
+            "src/gallery-makenode/js",
+            "src/gallery-md-button/js",
+            "src/gallery-md-accordion/js",
+            "src/gallery-md-button-group/js",
+            "src/gallery-md-spinner/js",
+            "src/gallery-md-timespinner/js",
+            "src/gallery-stdmod/js",
+            "src/gallery-md-ibutton/js",
+            "src/gallery-timeline/js",
+            "src/gallery-md-model/js",
+            "src/gallery-button-plugin/js",
+            "src/gallery-flyweight-tree/js",
+            "src/gallery-fwt-treeview/js"
+        ],
+        "outdir": "../satyam.github.com/apiDocsGallery"
+    }
+}

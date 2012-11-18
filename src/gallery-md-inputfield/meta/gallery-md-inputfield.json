@@ -1,0 +1,7 @@
+{
+    "gallery-md-inputfield": {
+        "requires": ["base-build", "widget", "widget-child", "gallery-makenode", "event-valuechange"],
+        "optional": ["panel"],
+        "skinnable":true
+    }
+}

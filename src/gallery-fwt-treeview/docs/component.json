@@ -1,0 +1,19 @@
+{
+    "name"       : "gallery-fwt-treeview",
+    "displayName": "Gallery: fwt-treeview",
+    "description": "A TreeView widget using the Flyweight pattern for its nodes so as to save memory.  It uses the classes in the gallery-flyweight-tree module.",
+    "author"     : [ "satyam" ],
+
+    "tags": [ "gallery" ,"treeview", "flyweight pattern"],
+
+    "examples": [
+        {
+            "name" : "tree-simple",
+            "displayName" : "Basic TreeView Implementation",
+            "description" : "Shows how to create a simple TreeView.",
+            "modules" : ["gallery-fwt-treeview"],
+            "tags" : ["TreeView"],
+            "hideTableOfContents": true
+        }
+    ]
+}

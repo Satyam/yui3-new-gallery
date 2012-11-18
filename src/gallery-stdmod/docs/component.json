@@ -1,0 +1,10 @@
+{
+    "name"       : "gallery-stdmod",
+    "displayName": "Gallery: stdmod",
+    "description": "A version of WidgetStdMod that has the contentBox as its BODY section",
+    "author"     : [ "satyam" ],
+
+    "tags": [ "gallery" ],
+
+    "examples": []
+}

@@ -1,0 +1,10 @@
+{
+    "name"       : "gallery-md-model",
+    "displayName": "Gallery: md-model",
+    "description": "An MVC Model similar to YUI's own Y.Model better adapted to use with existing SQL databases.   It supports multiple-field primary keys, helps in doing record updates in multi-user environments and several other features.  Contains extensions for undo, handling multiple-record models and to keep them",
+    "author"     : [ "satyam" ],
+
+    "tags": [ "gallery" ],
+
+    "examples": []
+}

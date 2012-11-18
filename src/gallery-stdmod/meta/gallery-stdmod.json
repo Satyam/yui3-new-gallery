@@ -1,0 +1,5 @@
+{
+    "gallery-stdmod": {
+        "requires": ["widget-stdmod"]
+    }
+}

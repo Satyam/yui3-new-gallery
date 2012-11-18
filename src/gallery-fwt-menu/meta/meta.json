@@ -1,0 +1,6 @@
+{
+	"gallery-fwt-menu": {
+		"requires":["gallery-flyweight-tree","widget","base-build"],
+		"skinnable": true
+	}
+}

@@ -1,0 +1,10 @@
+{
+    "name"       : "gallery-timeline",
+    "displayName": "Gallery: timeline",
+    "description": "A component to display historical timeline data produced by The Timeline Project at SourceForge",
+    "author"     : [ "satyam" ],
+
+    "tags": [ "gallery" ],
+
+    "examples": []
+}
