@@ -119,6 +119,17 @@ FWNode = Y.Base.create(
 			this._iNode = iNode;
 			this._stateProxy = iNode;
 		},
+        /**
+         * Whether this node has children.
+         * If there are children, it actually returns the number of children,
+         * otherwise it might return 0 or undefined.
+         * @method hasChildren
+         * @return {Boolean} true if the node has children
+         */
+        hasChildren: function () {
+            var children = this._iNode.children;
+            return !!(children && children.length);
+        },
 		/**
 		 * Executes the given function on each of the child nodes of this node.
 		 * @method forSomeChildren
@@ -126,7 +137,6 @@ FWNode = Y.Base.create(
 		 *		@param fn.child {FlyweightTreeNode} Instance of a suitable subclass of FlyweightTreeNode,
 		 *		positioned on top of the child node
 		 *		@param fn.index {Integer} Index of this child within the array of children
-		 *		@param fn.array {Array} array containing itself and its siblings
 		 * @param scope {object} The falue of this for the function.  Defaults to the parent.
 		**/
 		forSomeChildren: function(fn, scope) {
@@ -177,17 +187,19 @@ FWNode = Y.Base.create(
 				this._loadDynamic();
 				return;
 			}
-			if (iNode.children && iNode.children.length) {
-				if (value) {
-					if (!iNode._childrenRendered) {
-						self._renderChildren();
-					}
-					el.replaceClass(CNAME_COLLAPSED, CNAME_EXPANDED);
-				} else {
-					el.replaceClass(CNAME_EXPANDED, CNAME_COLLAPSED);
-				}
-			}
-            el.set('aria-expanded', String(value));
+			if (el) {
+                if (iNode.children && iNode.children.length) {
+                    if (value) {
+                        if (!iNode._childrenRendered) {
+                            self._renderChildren();
+                        }
+                        el.replaceClass(CNAME_COLLAPSED, CNAME_EXPANDED);
+                    } else {
+                        el.replaceClass(CNAME_EXPANDED, CNAME_COLLAPSED);
+                    }
+                }
+                el.set('aria-expanded', String(value));
+            }
 		},
 		/**
 		 * Triggers the dynamic loading of children for this node.
@@ -262,19 +274,19 @@ FWNode = Y.Base.create(
 		},
 		/**
 		 * Returns the parent node for this node or null if none exists.
-		 * The copy is not on {{#crossLink "hold"}}{{/crossLink}}.
-		 * Remember to release the copy to the pool when done.
+		 * The copy is on {{#crossLink "hold"}}{{/crossLink}}.
+		 * Remember to {{#crossLink "release"}}{{/crossLink}} the copy to the pool when done.
 		 * @method getParent
 		 * @return FlyweightTreeNode
 		 */
 		getParent: function() {
 			var iNode = this._iNode._parent;
-			return (iNode?this._root._poolFetch(iNode):null);
+			return (iNode?this._root._poolFetch(iNode).hold():null);
 		},
 		/**
 		 * Returns the next sibling node for this node or null if none exists.
-		 * The copy is not on {{#crossLink "hold"}}{{/crossLink}}.
-		 * Remember to release the copy to the pool when done.
+		 * The copy is on {{#crossLink "hold"}}{{/crossLink}}.
+		 * Remember to {{#crossLink "release"}}{{/crossLink}} the copy to the pool when done.
 		 * @method getNextSibling
 		 * @return FlyweightTreeNode
 		 */
@@ -285,12 +297,12 @@ FWNode = Y.Base.create(
 			if (index === 0 || index > siblings.length) {
 				return null;
 			}
-			return this._root._poolFetch(siblings[index]);
+			return this._root._poolFetch(siblings[index]).hold();
 		},
 		/**
 		 * Returns the previous sibling node for this node or null if none exists.
-		 * The copy is not on {{#crossLink "hold"}}{{/crossLink}}.
-		 * Remember to release the copy to the pool when done.
+		 * The copy is on {{#crossLink "hold"}}{{/crossLink}}.
+		 * Remember to {{#crossLink "release"}}{{/crossLink}} the copy to the pool when done.
 		 * @method getPreviousSibling
 		 * @return FlyweightTreeNode
 		 */
@@ -301,7 +313,7 @@ FWNode = Y.Base.create(
 			if (index < 0) {
 				return null;
 			}
-			return this._root._poolFetch(siblings[index]);
+			return this._root._poolFetch(siblings[index]).hold();
 		},
         /**
          * Sets the focus to this node.

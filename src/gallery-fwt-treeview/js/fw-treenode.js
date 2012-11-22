@@ -100,6 +100,16 @@
         _ariaCheckedGetter: function () {
             return ['false','mixed','true'][this.get(SELECTED)];
         },
+        /**
+         * Setter for the {{ćrossLink "selected:attribute}}{{/crossLink}}.
+         * Translates a truish or falsy value into FULLY_SELECTED or NOT_SELECTED.
+         * @method _selectedSetter
+         * @param value
+         * @private
+         */
+        _selectedSetter: function (value) {
+            return (value?FULLY_SELECTED:NOT_SELECTED);
+        },
 		/**
 		 * Overrides the original in FlyweightTreeNode so as to propagate the selected state
 		 * on dynamically loaded nodes.
@@ -147,6 +157,14 @@
             '<div tabIndex="{tabIndex}" class="{cname_content}"><div class="{cname_toggle}"></div>' +
             '<div class="{cname_icon}"></div><div class="{cname_selection}"></div><div class="{cname_label}">{label}</div></div>' +
             '<ul class="{cname_children}" role="group">{children}</ul></li>', CNAMES),
+        /**
+         * Collection of classNames to set in the template.
+         * @property CNAMES
+         * @type Object
+         * @static
+         * @final
+         */
+        CNAMES: CNAMES,
 		/**
 		 * Constant to use with the `selected` attribute to indicate the node is not selected.
 		 * @property NOT_SELECTED
@@ -185,23 +203,28 @@
              * The module is provided with a default CSS style that makes node selection visible.
              * To enable it, add the `yui3-fw-treeview-checkbox` className to the container of the tree.
              *
-			 * `selected` can be
+			 * `selected` can return
 			 *
 			 * - Y.FWTreeNode.NOT_SELECTED (0) not selected
 			 * - Y.FWTreeNode.PARTIALLY_SELECTED (1) partially selected: some children are selected, some not or partially selected.
 			 * - Y.FWTreeNode.FULLY_SELECTED (2) fully selected.
+             *
+             * `selected`can be set to:
+             * - any true value:  will produce a FULLY_SELECTED state.
+             * - any false value: will produce a NOT_SELECTED state.
 			 *
 			 * The partially selected state can only be the result of selection propagating up from a child node.
-			 * The attribute might return PARTIALLY_SELECTED but the developer should never set that value.
+			 * Since PARTIALLY_SELECTED cannot be set, leaving just two possible values for setting,
+             * any true or false value will be valid when setting.  However, no matter what values were 
+             * used when setting, one of the three possible values above will be returned.
+             *
 			 * @attribute selected
 			 * @type Integer
 			 * @value NOT_SELECTED
 			 */
 			selected: {
 				value:NOT_SELECTED,
-				validator:function (value) {
-					return value === NOT_SELECTED || value === FULLY_SELECTED || value === PARTIALLY_SELECTED;
-				}
+                setter: '_selectedSetter'
 			},
             /**
              * String value equivalent to the {{#crossLink "selected:attribute"}}{{/crossLink}}

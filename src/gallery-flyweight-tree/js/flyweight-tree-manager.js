@@ -135,12 +135,16 @@ FWMgr = Y.Base.create(
         /** Initializes the iNodes configuration with default values and management info.
          * @method _initNodes
          * @param parentINode {Object} Parent of the iNodes to be set
-         * @private
+         * @protected
          */
         _initNodes: function (parentINode) {
             var self = this,
                 dynLoad = !!self.get(DYNAMIC_LOADER);
-            YArray.each(parentINode.children, function (iNode) {
+            YArray.each(parentINode.children, function (iNode, i) {
+                if (Lang.isString(iNode)) {
+                    iNode = {label: iNode};
+                    parentINode.children[i] = iNode;
+                }
                 if (!self._focusedINode) {
                     self._focusedINode = iNode;
                 }
@@ -219,6 +223,53 @@ FWMgr = Y.Base.create(
                     this._poolReturn(this._poolFetch(iNode).set(EXPANDED, true));
                 }
             });
+        },
+        /**
+         * Collapses all the nodes of the tree.
+         *
+         * @method collapseAll
+         * @chainable
+         */
+        collapseAll: function () {
+            this._forSomeINode(function(iNode) {
+                if (iNode.children && iNode.expanded) {
+                    this._poolReturn(this._poolFetch(iNode).set(EXPANDED, false));
+                }
+            });
+        },
+        /**
+         * Finds a node by attribute value or by condition.
+         * If the first argument is a string, it must be the name of an attribute
+         * and the second argument the value sought.
+         * If the first argument is a function, it should return true on finding
+         * the node sought. The function will receive a node reference.
+         * It returns the node sought or null.
+         * The node is on hold and it must be released once used.
+         * @method getNodeBy
+         * @param attr {String or Function} Either an attribute name or a matching function
+         * @param value {Any} if the first argument is a string, the second is the value to match
+         * @return {FWNode or null} The node found or null
+         */
+        getNodeBy: function (attr, value) {
+            var fn,found = null;
+            if (Lang.isFunction(attr)) {
+                fn = attr;
+            } else if (Lang.isString(attr)) {
+                fn = function (node) {
+                    return node.get(attr) === value;
+                };
+            } else {
+                return null;
+            }
+            this.forSomeNodes(function (node) {
+                if (fn(node)) {
+                    found = node;
+                    found.hold();
+                    return true;
+                }
+                return false;
+            });
+            return found;
         },
 
         /** Generic event listener for DOM events listed in the {{#crossLink "_domEvents"}}{{/crossLink}} array.
@@ -333,12 +384,13 @@ FWMgr = Y.Base.create(
             return null;
         },
         /**
-         * Returns an instance of Flyweight node positioned over the root
+         * Returns an instance of Flyweight node positioned over the root.
+         * The reference is placed on hold and should be released once used.
          * @method getRoot
          * @return {FlyweightTreeNode}
          */
         getRoot: function () {
-            return this._poolFetch(this._tree);
+            return this._poolFetch(this._tree).hold();
         },
         /**
          * Returns a string with the markup for the whole tree.
@@ -353,7 +405,7 @@ FWMgr = Y.Base.create(
             root.forSomeChildren( function (fwNode, index, array) {
                 s += fwNode._getHTML(index, array.length, 0);
             });
-            this._poolReturn(root);
+            root.release();
             return s;
         },
         /**
@@ -427,22 +479,24 @@ FWMgr = Y.Base.create(
          *	@param fn.node {FlyweightTreeNode} node being visited.
          *	@param fn.depth {Integer} depth from the root. The root node is level zero and it is not traversed.
          *	@param fn.index {Integer} position of this node within its branch
-         *	@param fn.array {Array} array containing itself and its siblings
          * @param scope {Object} Scope to run the function in.  Defaults to the FlyweightTreeManager instance.
          * @return {Boolean} true if any function calls returned true (the traversal was interrupted)
          */
         forSomeNodes: function (fn, scope) {
             scope = scope || this;
 
-            var forOneLevel = function (fwNode, depth) {
-                fwNode.forSomeChildren(function (fwNode, index, array) {
-                    if (fn.call(scope, fwNode, depth, index, array) === true) {
-                        return true;
-                    }
-                    return forOneLevel(fwNode, depth+1);
-                });
-            };
-            return forOneLevel(this.getRoot(), 1);
+            var root = this.getRoot(),
+                forOneLevel = function (fwNode, depth) {
+                    fwNode.forSomeChildren(function (fwNode, index, array) {
+                        if (fn.call(scope, fwNode, depth, index, array) === true) {
+                            return true;
+                        }
+                        return forOneLevel(fwNode, depth+1);
+                    });
+                },
+                ret = forOneLevel(root, 1);
+            root.release();
+            return ret;
         },
         /**
          * Getter for the {{#crossLink "focusedNode:attribute"}}{{/crossLink}} attribute
@@ -477,7 +531,15 @@ FWMgr = Y.Base.create(
          */
         _focusOnINode: function (iNode) {
             var prevINode = this._focusedINode,
-                el;
+                el,
+                self = this,
+                expand = function (iNode) {
+                    iNode = iNode._parent;
+                    if (iNode && iNode._parent) {
+                        expand(iNode);
+                        self._poolReturn(self._poolFetch(iNode).set('expanded', true));
+                    }
+                };
 
             if (iNode && iNode !== prevINode) {
 
@@ -485,11 +547,14 @@ FWMgr = Y.Base.create(
                 el.blur();
                 el.set(TABINDEX, -1);
 
+                expand(iNode);
+
                 el = Y.one('#' + iNode.id + ' .' + CNAME_CONTENT);
                 el.focus();
                 el.set(TABINDEX,0);
 
-                this._focusedINode = iNode;
+                self._focusedINode = iNode;
+
             }
 
         },

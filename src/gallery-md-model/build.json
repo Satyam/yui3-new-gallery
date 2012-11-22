@@ -3,7 +3,13 @@
     "builds": {
         "gallery-md-model": {
             "jsfiles": [
-                "gallery-md-model.js"
+                "constants.js",
+                "model.js",
+                "simple-undo.js",
+                "chrono-undo.js",
+                "multi-record.js",
+                "multi-record-sorted.js",
+                "primary-key-index.js"
             ],
             "meta": {}
         }

@@ -1,0 +1,5 @@
+{
+    "projectName": "Satyam's YUI3 Gallery modules",
+    "yuiVersion" : "3.7.3",
+    "yuiSeedUrl" : "http://yui.yahooapis.com/3.7.3/build/yui/yui-min.js"
+}

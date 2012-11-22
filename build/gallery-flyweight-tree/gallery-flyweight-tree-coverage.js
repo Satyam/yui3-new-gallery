@@ -26,19 +26,51 @@ _yuitest_coverage["build/gallery-flyweight-tree/gallery-flyweight-tree.js"] = {
     path: "build/gallery-flyweight-tree/gallery-flyweight-tree.js",
     code: []
 };
-_yuitest_coverage["build/gallery-flyweight-tree/gallery-flyweight-tree.js"].code=["YUI.add('gallery-flyweight-tree', function (Y, NAME) {","","'use strict';","/*jslint white: true */","var Lang = Y.Lang,","	YArray = Y.Array,","","    DOT = '.',","	BYPASS_PROXY = \"_bypassProxy\",","	CBX = 'contentBox',","	VALUE = 'value',","    EXPANDED = 'expanded',","    DYNAMIC_LOADER = 'dynamicLoader',","    TABINDEX = 'tabIndex',","    FOCUSED = 'focused',","","    DEFAULT_POOL = '_default',","","    getCName = Y.ClassNameManager.getClassName,","    FWNODE_NAME = 'flyweight-tree-node',","	CNAME_NODE = getCName(FWNODE_NAME),","	cName = function (name) {","		return getCName(FWNODE_NAME, name);","	},","    CNAME_CONTENT = cName('content'),","	CNAME_CHILDREN = cName('children'),","	CNAME_COLLAPSED = cName('collapsed'),","	CNAME_EXPANDED = cName(EXPANDED),","	CNAME_NOCHILDREN = cName('no-children'),","	CNAME_FIRSTCHILD = cName('first-child'),","	CNAME_LASTCHILD = cName('last-child'),","	CNAME_LOADING = cName('loading'),","","	FWMgr,","	FWNode;","","/**","* @module gallery-flyweight-tree","*","*/","","/**"," * Widget to handle its child nodes by using the flyweight pattern."," *"," * The information for the tree is stored internally in a plain object without methods,"," * events or attributes."," * This manager will position FlyweightTreeNode instances (or subclasses of it)"," * over these iNodes from a small pool of them, in order to save memory."," *"," * The nodes on this configuration tree are referred to in this documentation as `iNodes`"," * for 'internal nodes', to tell them apart from the pooled FlyweightTreeNode instances"," * that will be used to manipulate them.  The FlyweightTreeNode instances will usually"," * be declared as `fwNodes` when confusion might arise."," * If a variable or argument is not explicitly named `iNode` or a related name it is"," * FlyweightTreeNode instance."," *"," * The developer should not be concerned about the iNodes,"," * except in the initial configuration tree."," * If the developer finds anything that needs to be done through iNodes,"," * it is a bug and should be reported (thanks)."," * iNodes should be private."," *"," * @class FlyweightTreeManager"," * @extends Widget"," * @constructor"," */","","FWMgr = Y.Base.create(","    NAME,","    Y.Widget,","    [],","    {","        /**","         * Clone of the configuration tree.","         * The FlyweightTreeNode instances will use the iNodes (internal nodes) in this tree as the storage for their state.","         * @property _tree","         * @type Object","         * @private","         */","        _tree: null,","        /**","         * Pool of FlyweightTreeNode instances to use and reuse by the manager.","         * It contains a hash of arrays indexed by the iNode (internal node) type.","         * Each array contains a series of FlyweightTreeNode subclasses of the corresponding type.","         * @property _pool","         * @type {Object}","         * @private","         */","        _pool: null,","        /**","         * List of dom events to be listened for at the outer container and fired again","         * at the FlyweightTreeNode level once positioned over the source iNode.","         *","         * Since the node instances are not actually there, they can't listen to the events themselves","         * so the events listed here will serve to wake up those instances and get the event","         * as if they had been there all along.","         * @property _domEvents","         * @type Array of strings","         * @protected","         * @default null","         */","        _domEvents: null,","        /**","         * Reference to the element that has the focus or should have the focus","         * when this widget is active (ie, tabbed into).","         * Mostly used for WAI-ARIA support.","         * @property _focusedINode","         * @type FlyweightTreeNode","         * @private","         * @default null","         */","        _focusedINode: null,","","        /**","         * Event handles of events subscribed to, to detach them on destroy","         * @property _eventHandles","         * @type Array of EventHandles","         * @private","         */","        _eventHandles: null,","","        /**","         * Part of the Widget lifecycle.","         * @method initializer","         * @protected","         */","        initializer:function () {","            this._pool = {};","            this._eventHandles = [];","        },","        /**","         * Part of the lifecycle.  Destroys the pools.","         * @method destructor","         * @protected","         */","        destructor: function () {","            YArray.each(this._pool, function (fwNode) {","                fwNode.destroy();","            });","            this._pool = null;","            YArray.each(this._eventHandles, function (evHandle) {","                evHandle.detach();","            });","            this._eventHandles = null;","","        },","        /**","         * Method to load the configuration tree.","         * The nodes in this tree are copied into iNodes (internal nodes) for internal use.","         *","         * The initializer does not load the tree automatically so as to allow the subclass","         * of this manager","         * to process the tree definition anyway it wants, adding defaults and such","         * and to name the tree whatever is suitable.","         * For TreeView, the configuration property is named `tree`, for a form, it is named `form`.","         * It also sets initial values for some default properties such as `parent` references and `id` for all iNodes.","         * @method _loadConfig","         * @param tree {Array} Configuration for the first level of nodes.","         * Contains objects with the following attributes:","         * @param tree.label {String} Text or HTML markup to be shown in the node","         * @param [tree.expanded=true] {Boolean} Whether the children of this node should be visible.","         * @param [tree.children] {Array} Further definitions for the children of this node","         * @param [tree.type=FWTreeNode] {FWTreeNode | String} Class used to create instances for this iNode.","         * It can be a reference to an object or a name that can be resolved as `Y[name]`.","         * @param [tree.id=Y.guid()] {String} Identifier to assign to the DOM element containing the UI for this node.","         * @param [tree.template] {String} Template for this particular node.","         * @protected","         */","        _loadConfig: function (tree) {","            this._tree = {","                children: Y.clone(tree)","            };","            this._initNodes(this._tree);","","        },","        /** Initializes the iNodes configuration with default values and management info.","         * @method _initNodes","         * @param parentINode {Object} Parent of the iNodes to be set","         * @private","         */","        _initNodes: function (parentINode) {","            var self = this,","                dynLoad = !!self.get(DYNAMIC_LOADER);","            YArray.each(parentINode.children, function (iNode) {","                if (!self._focusedINode) {","                    self._focusedINode = iNode;","                }","                iNode._parent = parentINode;","                iNode.id = iNode.id || Y.guid();","                if (dynLoad && !iNode.children) {","                    iNode.expanded = !!iNode.isLeaf;","                } else {","                    iNode.expanded = (iNode.expanded === undefined) || !!iNode.expanded;","                }","                self._initNodes(iNode);","            });","        },","		/**","		 * Widget lifecyle method.","         *","         * Gets the HTML markup for the visible nodes and inserts it into the contentbox.","		 * @method renderUI","		 * @protected","		 */","		renderUI: function () {","            this.get(CBX).setHTML(this._getHTML());","        },","        /**","         * Initializes the events for its internal use and those requested in","         * the {{#crossLink \"_domEvents\"}}{{/crossLink}} array.","         * @method bindUI","         * @protected","         */","        bindUI: function() {","            var self = this;","","            self._eventHandles.push(self.after('focus', self._afterFocus));","            if (self._domEvents) {","                YArray.each(self._domEvents, function (event) {","                    self._eventHandles.push(self.after(event, self._afterDomEvent, self));","                });","            }","        },","        /**","         * Overrides the native `fire` method so that for DOM events,","         * it will fetch from the pool the fwNode that should have received","         * the event and add it to the event facade as property `node`.","         *","         * @method fire","         * @param type {String|Object} The type of the event, or an object that contains","         * a 'type' property.","         * @param arguments {Object*} an arbitrary set of parameters to pass to","         * the handler. If the first of these is an object literal and the event is","         * configured to emit an event facade, the event facade will replace that","         * parameter after the properties the object literal contains are copied to","         * the event facade.","         * @return {Boolean} false if the event was halted.","         */","        fire: function (type, ev) {","            var ret, self = this;","            if (ev && ev.domEvent) {","                ev.node = self._poolFetchFromEvent(ev);","                ret = FWMgr.superclass.fire.call(self, type, ev);","                self._poolReturn(ev.node);","                return ret;","            }","            return FWMgr.superclass.fire.apply(self, arguments);","        },","        /**","         * Expands all the nodes of the tree.","         *","         * It will only expand existing nodes.  If there is a {{#crossLink \"dynamicLoader:attribute\"}}{{/crossLink}} configured","         * it will not expand those since that might lead to extreme situations.","         * @method expandAll","         * @chainable","         */","        expandAll: function () {","            this._forSomeINode(function(iNode) {","                if (iNode.children && !iNode.expanded) {","                    this._poolReturn(this._poolFetch(iNode).set(EXPANDED, true));","                }","            });","        },","","        /** Generic event listener for DOM events listed in the {{#crossLink \"_domEvents\"}}{{/crossLink}} array.","         *  It will locate the iNode represented by the UI elements that received the event,","         *  slide a suitable instance on it and fire the same event on that node.","         *  @method _afterEvent","         *  @param ev {EventFacade} Event facade as produced by the event","         *  @private","         */","        _afterDomEvent: function(ev) {","            var fwNode =  ev.node;","            if (fwNode) {","                fwNode.fire(ev.type.split(':')[1], {domEvent:ev.domEvent});","            }","        },","        /**","         * Returns a string identifying the type of the object to handle the iNode","         * or null if type was not a FlyweightNode instance.","         * @method _getTypeString","         * @param iNode {Object} Internal node in the tree configuration","         * @return {String} type of iNode.","         * @private","         */","        _getTypeString: function (iNode) {","            var type = iNode.type || DEFAULT_POOL;","            if (!Lang.isString(type)) {","                if (Lang.isObject(type)) {","                    type = type.NAME;","                } else {","                    throw \"Node contains unknown type\";","                }","            }","            return type;","        },","        /**","         * Pulls from the pool an instance of the type declared in the given iNode","         * and slides it over that iNode.","         * If there are no instances of the given type in the pool, a new one will be created via {{#crossLink \"_createNode\"}}{{/crossLink}}","         * If an instance is held (see: {{#crossLink \"FlyweightTreeNode/hold\"}}{{/crossLink}}), it will be returned instead.","         * @method _poolFetch","         * @param iNode {Object} reference to a iNode within the configuration tree","         * @return {FlyweightTreeNode} Usually a subclass of FlyweightTreeNode positioned over the given iNode","         * @protected","         */","        _poolFetch: function(iNode) {","            var pool,","                fwNode = iNode._held,","                type = this._getTypeString(iNode);","","            if (fwNode) {","                return fwNode;","            }","            pool = this._pool[type];","            if (pool === undefined) {","                pool = this._pool[type] = [];","            }","            if (pool.length) {","                fwNode = pool.pop();","                fwNode._slideTo(iNode);","                return fwNode;","            }","            return this._createNode(iNode);","        },","        /**","         * Returns the FlyweightTreeNode instance to the pool.","         * Instances held (see: {{#crossLink \"FlyweightTreeNode/hold\"}}{{/crossLink}}) are never returned.","         * @method _poolReturn","         * @param fwNode {FlyweightTreeNode} Instance to return.","         * @protected","         */","        _poolReturn: function (fwNode) {","            if (fwNode._iNode._held) {","                return;","            }","            var pool,","                type = this._getTypeString(fwNode._iNode);","            pool = this._pool[type];","            if (pool) {","                pool.push(fwNode);","            }","","        },","        /**","         * Returns a new instance of the type given in iNode or the","         * {{#crossLink \"defaultType\"}}{{/crossLink}} if none specified","         * and slides it on top of the iNode provided.","         * @method _createNode","         * @param iNode {Object} reference to a iNode within the configuration tree","         * @return {FlyweightTreeNode} Instance of the corresponding subclass of FlyweightTreeNode","         * @protected","         */","        _createNode: function (iNode) {","            var newNode,","                Type = iNode.type || this.get('defaultType');","            if (Lang.isString(Type)) {","                Type = Y[Type];","            }","            if (Type) {","                newNode = new Type({root:this});","                if (newNode instanceof Y.FlyweightTreeNode) {","                    // I need to do this otherwise Attribute will initialize","                    // the real iNode with default values when activating a lazyAdd attribute.","                    newNode._slideTo({});","                    YArray.each(Y.Object.keys(newNode._state.data), newNode._addLazyAttr, newNode);","                    // newNode.getAttrs();","                    // That's it (see above)","                    newNode._root =  this;","                    newNode._slideTo(iNode);","                    return newNode;","                }","            }","            return null;","        },","        /**","         * Returns an instance of Flyweight node positioned over the root","         * @method getRoot","         * @return {FlyweightTreeNode}","         */","        getRoot: function () {","            return this._poolFetch(this._tree);","        },","        /**","         * Returns a string with the markup for the whole tree.","         * A subclass might opt to produce markup for those parts visible. (lazy rendering)","         * @method _getHTML","         * @return {String} HTML for this widget","         * @protected","         */","        _getHTML: function () {","            var s = '',","                root = this.getRoot();","            root.forSomeChildren( function (fwNode, index, array) {","                s += fwNode._getHTML(index, array.length, 0);","            });","            this._poolReturn(root);","            return s;","        },","        /**","         * Locates a iNode in the tree by the element that represents it.","         * @method _findINodeByElement","         * @param el {Node} Any element belonging to the tree","         * @return {Object} iNode that produced the markup for that element or null if not found","         * @protected","         */","        _findINodeByElement: function(el) {","            var id = el.ancestor(DOT + FWNode.CNAME_NODE, true).get('id'),","                found = null,","                scan = function (iNode) {","                    if (iNode.id === id) {","                        found = iNode;","                        return true;","                    }","                    if (iNode.children) {","                        return YArray.some(iNode.children, scan);","                    }","                    return false;","                };","            if (scan(this._tree)) {","                return found;","            }","            return null;","        },","        /**","         * Returns a FlyweightTreeNode instance from the pool, positioned over the iNode whose markup generated some event.","         * @method _poolFetchFromEvent","         * @param ev {EventFacade}","         * @return {FlyweightTreeNode} The FlyweightTreeNode instance or null if not found.","         * @private","         */","        _poolFetchFromEvent: function (ev) {","            var found = this._findINodeByElement(ev.domEvent.target);","            if (found) {","                return this._poolFetch(found);","            }","            return null;","        },","        /**","         * Traverses the whole configuration tree, calling a given function for each iNode.","         * If the function returns true, the traversing will terminate.","         * @method _forSomeINode","         * @param fn {Function} Function to call on each configuration iNode","         *		@param fn.iNode {Object} iNode in the configuration tree","         *		@param fn.depth {Integer} depth of this iNode within the tree","         *		@param fn.index {Integer} index of this iNode within the array of its siblings","         * @param scope {Object} scope to run the function in, defaults to `this`.","         * @return true if any of the function calls returned true (the traversal was terminated earlier)","         * @protected","         */","        _forSomeINode: function(fn, scope) {","            scope = scope || this;","            var loop = function(iNode, depth) {","                return YArray.some(iNode.children || [], function(childINode, index) {","                    if (fn.call(scope, childINode,depth, index)) {","                        return true;","                    }","                    return loop(childINode,depth + 1);","                });","            };","            return loop(this._tree, 0);","        },","        /**","         * Executes the given function over all the nodes in the tree or until the function returns true.","         * If dynamic loading is enabled, it will not run over nodes not yet loaded.","         * @method forSomeNodes","         * @param fn {function} function to execute on each node.  It will receive:","         *	@param fn.node {FlyweightTreeNode} node being visited.","         *	@param fn.depth {Integer} depth from the root. The root node is level zero and it is not traversed.","         *	@param fn.index {Integer} position of this node within its branch","         *	@param fn.array {Array} array containing itself and its siblings","         * @param scope {Object} Scope to run the function in.  Defaults to the FlyweightTreeManager instance.","         * @return {Boolean} true if any function calls returned true (the traversal was interrupted)","         */","        forSomeNodes: function (fn, scope) {","            scope = scope || this;","","            var forOneLevel = function (fwNode, depth) {","                fwNode.forSomeChildren(function (fwNode, index, array) {","                    if (fn.call(scope, fwNode, depth, index, array) === true) {","                        return true;","                    }","                    return forOneLevel(fwNode, depth+1);","                });","            };","            return forOneLevel(this.getRoot(), 1);","        },","        /**","         * Getter for the {{#crossLink \"focusedNode:attribute\"}}{{/crossLink}} attribute","         * @method _focusedNodeGetter","         * @return {FlyweightNode} Node that would have the focus if the widget is focused","         * @private","         */","        _focusedNodeGetter: function () {","            return this._poolFetch(this._focusedINode);","        },","        /**","         * Setter for the {{#crossLink \"focusedNode:attribute\"}}{{/crossLink}} attribute","         * @method _focusedNodeSetter","         * @param value {FlyweightNode} Node to receive the focus.","         * @return {Object} iNode matching the focused node.","         * @private","         */","        _focusedNodeSetter: function (value) {","            if (!value || value instanceof Y.FlyweightTreeNode) {","                var newINode = (value?value._iNode:this._tree.children[0]);","                this._focusOnINode(newINode);","                return newINode;","            } else {","                return Y.Attribute.INVALID_VALUE;","            }","        },","        /**","         * Sets the focus on the given iNode","         * @method _focusOnINode","         * @param iNode {Object} iNode to receive the focus","         * @private","         */","        _focusOnINode: function (iNode) {","            var prevINode = this._focusedINode,","                el;","","            if (iNode && iNode !== prevINode) {","","                el = Y.one('#' + prevINode.id + ' .' + CNAME_CONTENT);","                el.blur();","                el.set(TABINDEX, -1);","","                el = Y.one('#' + iNode.id + ' .' + CNAME_CONTENT);","                el.focus();","                el.set(TABINDEX,0);","","                this._focusedINode = iNode;","            }","","        },","        /**","         * Setter for the {{#crossLink \"dynamicLoader:attribute\"}}{{/crossLink}} attribute.","         * It changes the expanded attribute to false on childless iNodes not marked with `isLeaf","         * since they can now be expanded.","         * @method","         * @param value {Function | null } Function to handle the loading of nodes on demand","         * @return {Function | null | INVALID_VALUE} function set or rejection","         * @private","         */","        _dynamicLoaderSetter: function (value) {","            if (!Lang.isFunction(value) &&  value !== null) {","                return Y.Attribute.INVALID_VALUE;","            }","            if (value) {","                this._forSomeINode(function(iNode) {","                    if (!iNode.children) {","                        iNode.expanded = !!iNode.isLeaf;","                    }","                });","            }","            return value;","        }","    },","    {","        ATTRS: {","            /**","             * Default object type of the nodes if no explicit type is given in the configuration tree.","             * It can be specified as an object reference, these two are equivalent: `Y.FWTreeNode` or  `'FWTreeNode'`.","             *","             * @attribute defaultType","             * @type {String | Object}","             * @default 'FlyweightTreeNode'","             */","            defaultType: {","                value: 'FlyweightTreeNode'","            },","            /**","             * Function used to load the nodes dynamically.","             * Function will run in the scope of the FlyweightTreeManager instance and will","             * receive:","             *","             * * node {FlyweightTreeNode} reference to the parent of the children to be loaded.","             * * callback {Function} function to call with the configuration info for the children.","             *","             * The function shall fetch the nodes and create a configuration object","             * much like the one a whole tree might receive.","             * It is not limited to just one level of nodes, it might contain children elements as well.","             * When the data is processed, it should call the callback with the configuration object.","             * The function is responsible of handling any errors.","             * If the the callback is called with no arguments, the parent node will be marked as having no children.","             *","             * This attribute should be set before the tree is rendered as childless nodes","             * render differently when there is a dynamic loader than when there isn't.","             * (childless nodes can be expanded when a dynamic loader is present and the UI should reflect that).","             * @attribute dynamicLoader","             * @type {Function or null}","             * @default null","             */","            dynamicLoader: {","                value: null,","                setter: '_dynamicLoaderSetter'","            },","            /**","             * Points to the node that currently has the focus.","             * If read, please make sure to release the node instance to the pool when done.","             * @attribute focusedNode","             * @type FlyweightTreeNode","             * @default First node in the tree","             */","            focusedNode: {","                getter: '_focusedNodeGetter',","                setter: '_focusedNodeSetter'","                // There is no need for validator since the setter already takes care of validation.","            }","","        }","    });","","","Y.FlyweightTreeManager = FWMgr;","/**","* An implementation of the flyweight pattern.","* This object can be slid on top of a literal object containing the definition","* of a tree and will take its state from that iNode it is slid upon.","* It relies for most of its functionality on the flyweight manager object,","* which contains most of the code.","* @module gallery-flyweight-tree","*/","","/**","* An implementation of the flyweight pattern.  This class should not be instantiated directly.","* Instances of this class can be requested from the flyweight manager class","* @class FlyweightTreeNode","* @extends Base","* @constructor  Do not instantiate directly.","*/","FWNode = Y.Base.create(","	FWNODE_NAME,","	Y.Base,","	[],","	{","		/**","		 * Reference to the iNode in the configuration tree it has been slid over.","		 * @property _iNode","		 * @type {Object}","		 * @private","		 **/","		_iNode:null,","		/**","		 * Reference to the FlyweightTreeManager instance this node belongs to.","		 * It is set by the root and should be considered read-only.","		 * @property _root","		 * @type FlyweightTreeManager","		 * @private","		 */","		_root: null,","        /**","         * Standard lifecycle method, reads the root node from the config","         * @method initializer","         * @param cfg {object} configuration data","         * @protected","         */","        initializer: function (cfg) {","            this._root = cfg.root;","        },","		/**","		 * Returns a string with the markup for this node along that of its children","		 * produced from its attributes rendered","		 * via the first template string it finds in these locations:","		 *","		 * * It's own {{#crossLink \"template\"}}{{/crossLink}} configuration attribute","		 * * The static {{#crossLink \"FlyweightTreeNode/TEMPLATE\"}}{{/crossLink}} class property","		 *","		 * @method _getHTML","		 * @param index {Integer} index of this node within the array of siblings","		 * @param nSiblings {Integer} number of siblings including this node","		 * @param depth {Integer} number of levels to the root","		 * @return {String} markup generated by this node","		 * @protected","		 */","		_getHTML: function(index, nSiblings, depth) {","			// assumes that if you asked for the HTML it is because you are rendering it","			var root = this._root,","                iNode = this._iNode,","				attrs = this.getAttrs(),","				s = '',","				templ = iNode.template,","				childCount = iNode.children && iNode.children.length,","				nodeClasses = [CNAME_NODE],","				superConstructor = this.constructor;","","			while (!templ) {","				templ = superConstructor.TEMPLATE;","				superConstructor = superConstructor.superclass.constructor;","","			}","","			iNode._rendered = true;","			if (childCount) {","				if (attrs.expanded) {","					iNode._childrenRendered = true;","					this.forSomeChildren( function (fwNode, index, array) {","						s += fwNode._getHTML(index, array.length, depth + 1);","					});","					nodeClasses.push(CNAME_EXPANDED);","				} else {","					nodeClasses.push(CNAME_COLLAPSED);","				}","			} else {","				if (this._root.get(DYNAMIC_LOADER) && !iNode.isLeaf) {","					nodeClasses.push(CNAME_COLLAPSED);","				} else {","					nodeClasses.push(CNAME_NOCHILDREN);","				}","			}","			if (index === 0) {","				nodeClasses.push(CNAME_FIRSTCHILD);","			}","			if (index === nSiblings - 1) {","				nodeClasses.push(CNAME_LASTCHILD);","			}","			attrs.children = s;","			attrs.cname_node = nodeClasses.join(' ');","			attrs.cname_content = CNAME_CONTENT;","			attrs.cname_children = CNAME_CHILDREN;","            attrs.tabIndex = (iNode === root._focusedINode)?0:-1;","","			return Lang.sub(templ, attrs);","","		},","		/**","		 * Method to slide this instance on top of another iNode in the configuration object","		 * @method _slideTo","		 * @param iNode {Object} iNode in the underlying configuration tree to slide this object on top of.","		 * @private","		 */","		_slideTo: function (iNode) {","			this._iNode = iNode;","			this._stateProxy = iNode;","		},","		/**","		 * Executes the given function on each of the child nodes of this node.","		 * @method forSomeChildren","		 * @param fn {Function} Function to be executed on each node","		 *		@param fn.child {FlyweightTreeNode} Instance of a suitable subclass of FlyweightTreeNode,","		 *		positioned on top of the child node","		 *		@param fn.index {Integer} Index of this child within the array of children","		 *		@param fn.array {Array} array containing itself and its siblings","		 * @param scope {object} The falue of this for the function.  Defaults to the parent.","		**/","		forSomeChildren: function(fn, scope) {","			var root = this._root,","				children = this._iNode.children,","				child, ret;","			scope = scope || this;","			if (children && children.length) {","				YArray.some(children, function (iNode, index, array) {","					child = root._poolFetch(iNode);","					ret = fn.call(scope, child, index, array);","					root._poolReturn(child);","					return ret;","				});","			}","		},","		/**","		 * Getter for the expanded configuration attribute.","		 * It is meant to be overriden by the developer.","		 * The supplied version defaults to true if the expanded property","		 * is not set in the underlying configuration tree.","		 * It can be overriden to default to false.","		 * @method _expandedGetter","		 * @return {Boolean} The expanded state of the node.","		 * @protected","		 */","		_expandedGetter: function () {","			return this._iNode.expanded !== false;","		},","		/**","		 * Setter for the expanded configuration attribute.","		 * It renders the child nodes if this branch has never been expanded.","		 * Then sets the className on the node to the static constants","		 * CNAME_COLLAPSED or CNAME_EXPANDED from Y.FlyweightTreeManager","		 * @method _expandedSetter","		 * @param value {Boolean} new value for the expanded attribute","		 * @private","		 */","		_expandedSetter: function (value) {","			var self = this,","				iNode = self._iNode,","				root = self._root,","				el = Y.one('#' + iNode.id),","				dynLoader = root.get(DYNAMIC_LOADER);","","			iNode.expanded = value = !!value;","			if (dynLoader && !iNode.isLeaf && (!iNode.children  || !iNode.children.length)) {","				this._loadDynamic();","				return;","			}","			if (iNode.children && iNode.children.length) {","				if (value) {","					if (!iNode._childrenRendered) {","						self._renderChildren();","					}","					el.replaceClass(CNAME_COLLAPSED, CNAME_EXPANDED);","				} else {","					el.replaceClass(CNAME_EXPANDED, CNAME_COLLAPSED);","				}","			}","            el.set('aria-expanded', String(value));","		},","		/**","		 * Triggers the dynamic loading of children for this node.","		 * @method _loadDynamic","		 * @private","		 */","		_loadDynamic: function () {","			var self = this,","				root = self._root;","			Y.one('#' + this.get('id')).replaceClass(CNAME_COLLAPSED, CNAME_LOADING);","			root.get(DYNAMIC_LOADER).call(root, self, Y.bind(self._dynamicLoadReturn, self));","","		},","		/**","		 * Callback for the dynamicLoader method.","		 * @method _dynamicLoadReturn","		 * @param response {Array} array of child iNodes","		 * @private","		 */","		_dynamicLoadReturn: function (response) {","			var self = this,","				iNode = self._iNode,","				root = self._root;","","			if (response) {","","				iNode.children = response;","				root._initNodes(iNode);","				self._renderChildren();","			} else {","				iNode.isLeaf = true;","			}","			// isLeaf might have been set in the response, not just in the line above.","			Y.one('#' + iNode.id).replaceClass(CNAME_LOADING, (iNode.isLeaf?CNAME_NOCHILDREN:CNAME_EXPANDED));","		},","		/**","		 * Renders the children of this node.","		 * It the children had been rendered, they will be replaced.","		 * @method _renderChildren","		 * @private","		 */","		_renderChildren: function () {","			var s = '',","				iNode = this._iNode,","				depth = this.get('depth');","			iNode._childrenRendered = true;","			this.forSomeChildren(function (fwNode, index, array) {","				s += fwNode._getHTML(index, array.length, depth + 1);","			});","			Y.one('#' + iNode.id + ' .' + CNAME_CHILDREN).setContent(s);","		},","		/**","		 * Prevents this instance from being returned to the pool and reused.","		 * Remember to {{#crossLink \"release\"}}{{/crossLink}} this instance when no longer needed.","		 * @method hold","		 * @chainable","		 */","		hold: function () {","			return (this._iNode._held = this);","		},","		/**","		 * Allows this instance to be returned to the pool and reused.","		 *","		 * __Important__: This instance should not be used after being released","		 * @method release","		 * @chainable","		 */","		release: function () {","			this._iNode._held = null;","			this._root._poolReturn(this);","			return this;","		},","		/**","		 * Returns the parent node for this node or null if none exists.","		 * The copy is not on {{#crossLink \"hold\"}}{{/crossLink}}.","		 * Remember to release the copy to the pool when done.","		 * @method getParent","		 * @return FlyweightTreeNode","		 */","		getParent: function() {","			var iNode = this._iNode._parent;","			return (iNode?this._root._poolFetch(iNode):null);","		},","		/**","		 * Returns the next sibling node for this node or null if none exists.","		 * The copy is not on {{#crossLink \"hold\"}}{{/crossLink}}.","		 * Remember to release the copy to the pool when done.","		 * @method getNextSibling","		 * @return FlyweightTreeNode","		 */","		getNextSibling: function() {","			var parent = this._iNode._parent,","				siblings = (parent && parent.children) || [],","				index = siblings.indexOf(this) + 1;","			if (index === 0 || index > siblings.length) {","				return null;","			}","			return this._root._poolFetch(siblings[index]);","		},","		/**","		 * Returns the previous sibling node for this node or null if none exists.","		 * The copy is not on {{#crossLink \"hold\"}}{{/crossLink}}.","		 * Remember to release the copy to the pool when done.","		 * @method getPreviousSibling","		 * @return FlyweightTreeNode","		 */","		getPreviousSibling: function() {","			var parent = this._iNode._parent,","				siblings = (parent && parent.children) || [],","				index = siblings.indexOf(this) - 1;","			if (index < 0) {","				return null;","			}","			return this._root._poolFetch(siblings[index]);","		},","        /**","         * Sets the focus to this node.","         * @method focus","         * @chainable","         */","        focus: function() {","            return this._root.set(FOCUSED, this);","        },","        /**","         * Removes the focus from this node","         * @method blur","         * @chainable","         */","        blur: function () {","            return this._root.set(FOCUSED, null);","        },","		/**","		 * Sugar method to toggle the expanded state of the node.","		 * @method toggle","		 * @chainable","		 */","		toggle: function() {","			return this.set(EXPANDED, !this.get(EXPANDED));","		},","        /**","         * Sugar method to expand a node","         * @method expand","         * @chainable","         */","        expand: function() {","            return this.set(EXPANDED, true);","        },","        /**","         * Sugar method to collapse this node","         * @method collapse","         * @chainable","         */","        collapse: function() {","            return this.set(EXPANDED, false);","        },","		/**","		 * Returns true if this node is the root node","		 * @method isRoot","		 * @return {Boolean} true if root node","		 */","		isRoot: function() {","			return this._root._tree === this._iNode;","		},","		/**","		* Gets the stored value for the attribute, from either the","		* internal state object, or the state proxy if it exits","		*","		* @method _getStateVal","		* @private","		* @param {String} name The name of the attribute","		* @return {Any} The stored value of the attribute","		*/","		_getStateVal : function(name) {","			var iNode = this._iNode;","			if (this._state.get(name, BYPASS_PROXY) || !iNode) {","				return this._state.get(name, VALUE);","			}","			if (iNode.hasOwnProperty(name)) {","				return iNode[name];","			}","			return this._state.get(name, VALUE);","		},","","		/**","		* Sets the stored value for the attribute, in either the","		* internal state object, or the state proxy if it exits","		*","		* @method _setStateVal","		* @private","		* @param {String} name The name of the attribute","		* @param {Any} value The value of the attribute","		*/","		_setStateVal : function(name, value) {","			var iNode = this._iNode;","			if (this._state.get(name, BYPASS_PROXY) || this._state.get(name, 'initializing') || !iNode) {","				this._state.add(name, VALUE, value);","			} else {","				iNode[name] = value;","			}","		}","	},","	{","		/**","		 * Template string to be used to render this node.","		 * It should be overriden by the subclass.","		 *","		 * It contains the HTML markup for this node plus placeholders,","		 * enclosed in curly braces, that have access to any of the","		 * configuration attributes of this node plus several predefined placeholders.","         *","         * It must contain at least three elements identified by their classNames:","","         +----------------------------+","         | {cname_node}               |","         | +------------------------+ |","         | | {cname_content}        | |","         | +------------------------+ |","         |                            |","         | +------------------------+ |","         | | {cname_children}       | |","         | +------------------------+ |","         +----------------------------+","","         * For example:","","         '<div id=\"{id}\" class=\"{cname_node}\" role=\"\" aria-expanded=\"{expanded}\">' +","               '<div tabIndex=\"{tabIndex}\" class=\"{cname_content}\">{label}</div>' +","               '<div class=\"{cname_children}\" role=\"group\">{children}</div>' +","         '</div>'","","         * The outermost container identified by the className `{cname_node}`","         * must also use the `{id}` placeholder to set the `id` of the node.","         * It should also have the proper ARIA role assigned and the","         * `aria-expanded` set to the `{expanded}` placeholder.","         *","         * It must contain two further elements:","         *","         * * A container for the contents of this node, identified by the className","         *   `{cname_content}` which should contain everything the user would associate","         *   with this node, such as the label and other status indicators","         *   such as toggle and selection indicators.","         *   This is the element that would receive the focus of the node, thus,","         *   it must have a `{tabIndex}` placeholder to receive the appropriate","         *   value for the `tabIndex` attribute.","         *","         * * The other element is the container for the children of this node.","         *   It will be identified by the className `{cname_children}` and it","         *   should enclose the placeholder `{children}`.","         *","		 * @property TEMPLATE","		 * @type {String}","		 * @default '<div id=\"{id}\" class=\"{cname_node}\" role=\"\" aria-expanded=\"{expanded}\"><div tabIndex=\"{tabIndex}\"","         class=\"{cname_content}\">{label}</div><div class=\"{cname_children}\" role=\"group\">{children}</div></div>'","		 * @static","		 */","		TEMPLATE: '<div id=\"{id}\" class=\"{cname_node}\" role=\"\" aria-expanded=\"{expanded}\">' +","                        '<div tabIndex=\"{tabIndex}\" class=\"{cname_content}\">{label}</div>' +","                        '<div class=\"{cname_children}\" role=\"group\">{children}</div>' +","                   '</div>',","		/**","		 * CCS className constant to use as the class name for the DOM element representing the node.","		 * @property CNAME_NODE","		 * @type String","		 * @static","		 */","		CNAME_NODE: CNAME_NODE,","		/**","		 * CCS className constant to use as the class name for the DOM element that will contain the label and/or status of this node.","		 * @property CNAME_CONTENT","		 * @type String","		 * @static","		 */","		CNAME_CONTENT: CNAME_CONTENT,","		/**","		 * CCS className constant to use as the class name for the DOM element that will contain the children of this node.","		 * @property CNAME_CHILDREN","		 * @type String","		 * @static","		 */","		CNAME_CHILDREN: CNAME_CHILDREN,","		/**","		 * CCS className constant added to the DOM element for this node when its state is not expanded.","		 * @property CNAME_COLLAPSED","		 * @type String","		 * @static","		 */","		CNAME_COLLAPSED: CNAME_COLLAPSED,","		/**","		 * CCS className constant added to the DOM element for this node when its state is expanded.","		 * @property CNAME_EXPANDED","		 * @type String","		 * @static","		 */","		CNAME_EXPANDED: CNAME_EXPANDED,","		/**","		 * CCS className constant added to the DOM element for this node when it has no children.","		 * @property CNAME_NOCHILDREN","		 * @type String","		 * @static","		 */","		CNAME_NOCHILDREN: CNAME_NOCHILDREN,","		/**","		 * CCS className constant added to the DOM element for this node when it is the first in the group.","		 * @property CNAME_FIRSTCHILD","		 * @type String","		 * @static","		 */","		CNAME_FIRSTCHILD: CNAME_FIRSTCHILD,","		/**","		 * CCS className constant added to the DOM element for this node when it is the last in the group.","		 * @property CNAME_LASTCHILD","		 * @type String","		 * @static","		 */","		CNAME_LASTCHILD: CNAME_LASTCHILD,","		/**","		 * CCS className constant added to the DOM element for this node when dynamically loading its children.","		 * @property CNAME_LOADING","		 * @type String","		 * @static","		 */","		CNAME_LOADING: CNAME_LOADING,","		ATTRS: {","			/**","			 * Reference to the FlyweightTreeManager this node belongs to","			 * @attribute root","			 * @type {FlyweightTreeManager}","			 * @readOnly","			 *","			 */","","			root: {","				_bypassProxy: true,","				readOnly: true,","				getter: function() {","					return this._root;","				}","			},","","			/**","			 * Template to use on this particular instance.","			 * The renderer will default to the static TEMPLATE property of this class","			 * (the preferred way) or the nodeTemplate configuration attribute of the root.","			 * See the TEMPLATE static property.","			 * @attribute template","			 * @type {String}","			 * @default undefined","			 */","			template: {","				validator: Lang.isString","			},","			/**","			 * Label for this node. Nodes usually have some textual content, this is the place for it.","			 * @attribute label","			 * @type {String}","			 * @default ''","			 */","			label: {","				validator: Lang.isString,","				value: ''","			},","			/**","			 * Id to assign to the DOM element that contains this node.","			 * If none was supplied, it will generate one","			 * @attribute id","			 * @type {Identifier}","			 * @default guid()","			 * @readOnly","			 */","			id: {","				readOnly: true","			},","			/**","			 * Returns the depth of this node from the root.","			 * This is calculated on-the-fly.","			 * @attribute depth","			 * @type Integer","			 * @readOnly","			 */","			depth: {","				_bypassProxy: true,","				readOnly: true,","				getter: function () {","					var count = 0,","						iNode = this._iNode;","					while (iNode._parent) {","						count += 1;","						iNode = iNode._parent;","					}","					return count-1;","				}","			},","			/**","			 * Expanded state of this node.","			 * @attribute expanded","			 * @type Boolean","			 * @default true","			 */","			expanded: {","				_bypassProxy: true,","				getter: '_expandedGetter',","				setter: '_expandedSetter'","			}","		}","	}",");","Y.FlyweightTreeNode = FWNode;","","","","}, '@VERSION@', {\"requires\": [\"widget\", \"base-build\"], \"skinnable\": false});"];
-_yuitest_coverage["build/gallery-flyweight-tree/gallery-flyweight-tree.js"].lines = {"1":0,"3":0,"5":0,"23":0,"68":0,"128":0,"129":0,"137":0,"138":0,"140":0,"141":0,"142":0,"144":0,"170":0,"173":0,"182":0,"184":0,"185":0,"186":0,"188":0,"189":0,"190":0,"191":0,"193":0,"195":0,"206":0,"215":0,"217":0,"218":0,"219":0,"220":0,"240":0,"241":0,"242":0,"243":0,"244":0,"245":0,"247":0,"258":0,"259":0,"260":0,"273":0,"274":0,"275":0,"287":0,"288":0,"289":0,"290":0,"292":0,"295":0,"308":0,"312":0,"313":0,"315":0,"316":0,"317":0,"319":0,"320":0,"321":0,"322":0,"324":0,"334":0,"335":0,"337":0,"339":0,"340":0,"341":0,"355":0,"357":0,"358":0,"360":0,"361":0,"362":0,"365":0,"366":0,"369":0,"370":0,"371":0,"374":0,"382":0,"392":0,"394":0,"395":0,"397":0,"398":0,"408":0,"411":0,"412":0,"413":0,"415":0,"416":0,"418":0,"420":0,"421":0,"423":0,"433":0,"434":0,"435":0,"437":0,"452":0,"453":0,"454":0,"455":0,"456":0,"458":0,"461":0,"476":0,"478":0,"479":0,"480":0,"481":0,"483":0,"486":0,"495":0,"505":0,"506":0,"507":0,"508":0,"510":0,"520":0,"523":0,"525":0,"526":0,"527":0,"529":0,"530":0,"531":0,"533":0,"547":0,"548":0,"550":0,"551":0,"552":0,"553":0,"557":0,"616":0,"633":0,"660":0,"679":0,"688":0,"689":0,"690":0,"694":0,"695":0,"696":0,"697":0,"698":0,"699":0,"701":0,"703":0,"706":0,"707":0,"709":0,"712":0,"713":0,"715":0,"716":0,"718":0,"719":0,"720":0,"721":0,"722":0,"724":0,"734":0,"735":0,"748":0,"751":0,"752":0,"753":0,"754":0,"755":0,"756":0,"757":0,"772":0,"784":0,"790":0,"791":0,"792":0,"793":0,"795":0,"796":0,"797":0,"798":0,"800":0,"802":0,"805":0,"813":0,"815":0,"816":0,"826":0,"830":0,"832":0,"833":0,"834":0,"836":0,"839":0,"848":0,"851":0,"852":0,"853":0,"855":0,"864":0,"874":0,"875":0,"876":0,"886":0,"887":0,"897":0,"900":0,"901":0,"903":0,"913":0,"916":0,"917":0,"919":0,"927":0,"935":0,"943":0,"951":0,"959":0,"967":0,"979":0,"980":0,"981":0,"983":0,"984":0,"986":0,"999":0,"1000":0,"1001":0,"1003":0,"1141":0,"1189":0,"1191":0,"1192":0,"1193":0,"1195":0,"1212":0};
-_yuitest_coverage["build/gallery-flyweight-tree/gallery-flyweight-tree.js"].functions = {"cName:22":0,"initializer:127":0,"(anonymous 2):137":0,"(anonymous 3):141":0,"destructor:136":0,"_loadConfig:169":0,"(anonymous 4):184":0,"_initNodes:181":0,"renderUI:205":0,"(anonymous 5):219":0,"bindUI:214":0,"fire:239":0,"(anonymous 6):258":0,"expandAll:257":0,"_afterDomEvent:272":0,"_getTypeString:286":0,"_poolFetch:307":0,"_poolReturn:333":0,"_createNode:354":0,"getRoot:381":0,"(anonymous 7):394":0,"_getHTML:391":0,"scan:410":0,"_findINodeByElement:407":0,"_poolFetchFromEvent:432":0,"(anonymous 8):454":0,"loop:453":0,"_forSomeINode:451":0,"(anonymous 9):479":0,"forOneLevel:478":0,"forSomeNodes:475":0,"_focusedNodeGetter:494":0,"_focusedNodeSetter:504":0,"_focusOnINode:519":0,"(anonymous 10):551":0,"_dynamicLoaderSetter:546":0,"initializer:659":0,"(anonymous 11):698":0,"_getHTML:677":0,"_slideTo:733":0,"(anonymous 12):753":0,"forSomeChildren:747":0,"_expandedGetter:771":0,"_expandedSetter:783":0,"_loadDynamic:812":0,"_dynamicLoadReturn:825":0,"(anonymous 13):852":0,"_renderChildren:847":0,"hold:863":0,"release:873":0,"getParent:885":0,"getNextSibling:896":0,"getPreviousSibling:912":0,"focus:926":0,"blur:934":0,"toggle:942":0,"expand:950":0,"collapse:958":0,"isRoot:966":0,"_getStateVal:978":0,"_setStateVal:998":0,"getter:1140":0,"getter:1188":0,"(anonymous 1):1":0};
-_yuitest_coverage["build/gallery-flyweight-tree/gallery-flyweight-tree.js"].coveredLines = 238;
-_yuitest_coverage["build/gallery-flyweight-tree/gallery-flyweight-tree.js"].coveredFunctions = 64;
+_yuitest_coverage["build/gallery-flyweight-tree/gallery-flyweight-tree.js"].code=["YUI.add('gallery-flyweight-tree', function (Y, NAME) {","","/**","* An implementation of the flyweight pattern for rendering tree-structured data.","*","* This module is made of two components, the manager and the nodes.","* The manager, FlyweightTreeManager, holds a definition of the tree in an internal, private object","* which is completely passive, with no methods, events or attributes.","* This is the internal tree configuration and the nodes of that tree are called iNodes","* for 'internal nodes'.","*","* When any action needs to be taken on any node, the manager takes a node instance","* (an instance of FlyweightTreeNode or, more often, a subclass of it)","* from the pool of instances, or creates one if none is available and slides it","* on top of the iNode holding its state and then performs the action as if","* the node instance had always been there.","*","* The manager is a subclass of Widget and contains the overall container for the tree.","* Nodes are a subclass of Base and they are rendered from markup resulting of","* processing its template with its attributes and several pre-defined placeholders.","*","* Nodes should not be instantiated directly but requested from the manager.","* Nodes are automatically generated by the manager in response to events.","* They are returned to the pool of nodes once the event listener return.","* The user should not hold references to nodes provided to event listeners","* or the callback of the tree traversal methods, since the manager will return","* them to the pool.  If the user needs to keep a reference, the `hold` method","* can be used to preserve it.","* On the other hand, for methods that do return a permanent reference or","* references marked as held, the user is responsible for calling `release`","* when no longer required so that the manager can return them to the pool.","*","* @module gallery-flyweight-tree","*/","'use strict';","/*jslint white: true */","var Lang = Y.Lang,","	YArray = Y.Array,","","    DOT = '.',","	BYPASS_PROXY = \"_bypassProxy\",","	CBX = 'contentBox',","	VALUE = 'value',","    EXPANDED = 'expanded',","    DYNAMIC_LOADER = 'dynamicLoader',","    TABINDEX = 'tabIndex',","    FOCUSED = 'focused',","","    DEFAULT_POOL = '_default',","","    getCName = Y.ClassNameManager.getClassName,","    FWNODE_NAME = 'flyweight-tree-node',","	CNAME_NODE = getCName(FWNODE_NAME),","	cName = function (name) {","		return getCName(FWNODE_NAME, name);","	},","    CNAME_CONTENT = cName('content'),","	CNAME_CHILDREN = cName('children'),","	CNAME_COLLAPSED = cName('collapsed'),","	CNAME_EXPANDED = cName(EXPANDED),","	CNAME_NOCHILDREN = cName('no-children'),","	CNAME_FIRSTCHILD = cName('first-child'),","	CNAME_LASTCHILD = cName('last-child'),","	CNAME_LOADING = cName('loading'),","","	FWMgr,","	FWNode;","","/**"," * Widget to handle its child nodes by using the flyweight pattern."," *"," * The information for the tree is stored internally in a plain object without methods,"," * events or attributes."," * This manager will position FlyweightTreeNode instances (or subclasses of it)"," * over these iNodes from a small pool of them, in order to save memory."," *"," * The nodes on this configuration tree are referred to in this documentation as `iNodes`"," * for 'internal nodes', to tell them apart from the pooled FlyweightTreeNode instances"," * that will be used to manipulate them.  The FlyweightTreeNode instances will usually"," * be declared as `fwNodes` when confusion might arise."," * If a variable or argument is not explicitly named `iNode` or a related name it is"," * FlyweightTreeNode instance."," *"," * The developer should not be concerned about the iNodes,"," * except in the initial configuration tree."," * If the developer finds anything that needs to be done through iNodes,"," * it is a bug and should be reported (thanks)."," * iNodes should be private."," *"," * @class FlyweightTreeManager"," * @extends Widget"," * @constructor"," */","","FWMgr = Y.Base.create(","    NAME,","    Y.Widget,","    [],","    {","        /**","         * Clone of the configuration tree.","         * The FlyweightTreeNode instances will use the iNodes (internal nodes) in this tree as the storage for their state.","         * @property _tree","         * @type Object","         * @private","         */","        _tree: null,","        /**","         * Pool of FlyweightTreeNode instances to use and reuse by the manager.","         * It contains a hash of arrays indexed by the iNode (internal node) type.","         * Each array contains a series of FlyweightTreeNode subclasses of the corresponding type.","         * @property _pool","         * @type {Object}","         * @private","         */","        _pool: null,","        /**","         * List of dom events to be listened for at the outer container and fired again","         * at the FlyweightTreeNode level once positioned over the source iNode.","         *","         * Since the node instances are not actually there, they can't listen to the events themselves","         * so the events listed here will serve to wake up those instances and get the event","         * as if they had been there all along.","         * @property _domEvents","         * @type Array of strings","         * @protected","         * @default null","         */","        _domEvents: null,","        /**","         * Reference to the element that has the focus or should have the focus","         * when this widget is active (ie, tabbed into).","         * Mostly used for WAI-ARIA support.","         * @property _focusedINode","         * @type FlyweightTreeNode","         * @private","         * @default null","         */","        _focusedINode: null,","","        /**","         * Event handles of events subscribed to, to detach them on destroy","         * @property _eventHandles","         * @type Array of EventHandles","         * @private","         */","        _eventHandles: null,","","        /**","         * Part of the Widget lifecycle.","         * @method initializer","         * @protected","         */","        initializer:function () {","            this._pool = {};","            this._eventHandles = [];","        },","        /**","         * Part of the lifecycle.  Destroys the pools.","         * @method destructor","         * @protected","         */","        destructor: function () {","            YArray.each(this._pool, function (fwNode) {","                fwNode.destroy();","            });","            this._pool = null;","            YArray.each(this._eventHandles, function (evHandle) {","                evHandle.detach();","            });","            this._eventHandles = null;","","        },","        /**","         * Method to load the configuration tree.","         * The nodes in this tree are copied into iNodes (internal nodes) for internal use.","         *","         * The initializer does not load the tree automatically so as to allow the subclass","         * of this manager","         * to process the tree definition anyway it wants, adding defaults and such","         * and to name the tree whatever is suitable.","         * For TreeView, the configuration property is named `tree`, for a form, it is named `form`.","         * It also sets initial values for some default properties such as `parent` references and `id` for all iNodes.","         * @method _loadConfig","         * @param tree {Array} Configuration for the first level of nodes.","         * Contains objects with the following attributes:","         * @param tree.label {String} Text or HTML markup to be shown in the node","         * @param [tree.expanded=true] {Boolean} Whether the children of this node should be visible.","         * @param [tree.children] {Array} Further definitions for the children of this node","         * @param [tree.type=FWTreeNode] {FWTreeNode | String} Class used to create instances for this iNode.","         * It can be a reference to an object or a name that can be resolved as `Y[name]`.","         * @param [tree.id=Y.guid()] {String} Identifier to assign to the DOM element containing the UI for this node.","         * @param [tree.template] {String} Template for this particular node.","         * @protected","         */","        _loadConfig: function (tree) {","            this._tree = {","                children: Y.clone(tree)","            };","            this._initNodes(this._tree);","","        },","        /** Initializes the iNodes configuration with default values and management info.","         * @method _initNodes","         * @param parentINode {Object} Parent of the iNodes to be set","         * @protected","         */","        _initNodes: function (parentINode) {","            var self = this,","                dynLoad = !!self.get(DYNAMIC_LOADER);","            YArray.each(parentINode.children, function (iNode, i) {","                if (Lang.isString(iNode)) {","                    iNode = {label: iNode};","                    parentINode.children[i] = iNode;","                }","                if (!self._focusedINode) {","                    self._focusedINode = iNode;","                }","                iNode._parent = parentINode;","                iNode.id = iNode.id || Y.guid();","                if (dynLoad && !iNode.children) {","                    iNode.expanded = !!iNode.isLeaf;","                } else {","                    iNode.expanded = (iNode.expanded === undefined) || !!iNode.expanded;","                }","                self._initNodes(iNode);","            });","        },","		/**","		 * Widget lifecyle method.","         *","         * Gets the HTML markup for the visible nodes and inserts it into the contentbox.","		 * @method renderUI","		 * @protected","		 */","		renderUI: function () {","            this.get(CBX).setHTML(this._getHTML());","        },","        /**","         * Initializes the events for its internal use and those requested in","         * the {{#crossLink \"_domEvents\"}}{{/crossLink}} array.","         * @method bindUI","         * @protected","         */","        bindUI: function() {","            var self = this;","","            self._eventHandles.push(self.after('focus', self._afterFocus));","            if (self._domEvents) {","                YArray.each(self._domEvents, function (event) {","                    self._eventHandles.push(self.after(event, self._afterDomEvent, self));","                });","            }","        },","        /**","         * Overrides the native `fire` method so that for DOM events,","         * it will fetch from the pool the fwNode that should have received","         * the event and add it to the event facade as property `node`.","         *","         * @method fire","         * @param type {String|Object} The type of the event, or an object that contains","         * a 'type' property.","         * @param arguments {Object*} an arbitrary set of parameters to pass to","         * the handler. If the first of these is an object literal and the event is","         * configured to emit an event facade, the event facade will replace that","         * parameter after the properties the object literal contains are copied to","         * the event facade.","         * @return {Boolean} false if the event was halted.","         */","        fire: function (type, ev) {","            var ret, self = this;","            if (ev && ev.domEvent) {","                ev.node = self._poolFetchFromEvent(ev);","                ret = FWMgr.superclass.fire.call(self, type, ev);","                self._poolReturn(ev.node);","                return ret;","            }","            return FWMgr.superclass.fire.apply(self, arguments);","        },","        /**","         * Expands all the nodes of the tree.","         *","         * It will only expand existing nodes.  If there is a {{#crossLink \"dynamicLoader:attribute\"}}{{/crossLink}} configured","         * it will not expand those since that might lead to extreme situations.","         * @method expandAll","         * @chainable","         */","        expandAll: function () {","            this._forSomeINode(function(iNode) {","                if (iNode.children && !iNode.expanded) {","                    this._poolReturn(this._poolFetch(iNode).set(EXPANDED, true));","                }","            });","        },","        /**","         * Collapses all the nodes of the tree.","         *","         * @method collapseAll","         * @chainable","         */","        collapseAll: function () {","            this._forSomeINode(function(iNode) {","                if (iNode.children && iNode.expanded) {","                    this._poolReturn(this._poolFetch(iNode).set(EXPANDED, false));","                }","            });","        },","        /**","         * Finds a node by attribute value or by condition.","         * If the first argument is a string, it must be the name of an attribute","         * and the second argument the value sought.","         * If the first argument is a function, it should return true on finding","         * the node sought. The function will receive a node reference.","         * It returns the node sought or null.","         * The node is on hold and it must be released once used.","         * @method getNodeBy","         * @param attr {String or Function} Either an attribute name or a matching function","         * @param value {Any} if the first argument is a string, the second is the value to match","         * @return {FWNode or null} The node found or null","         */","        getNodeBy: function (attr, value) {","            var fn,found = null;","            if (Lang.isFunction(attr)) {","                fn = attr;","            } else if (Lang.isString(attr)) {","                fn = function (node) {","                    return node.get(attr) === value;","                };","            } else {","                return null;","            }","            this.forSomeNodes(function (node) {","                if (fn(node)) {","                    found = node;","                    found.hold();","                    return true;","                }","                return false;","            });","            return found;","        },","","        /** Generic event listener for DOM events listed in the {{#crossLink \"_domEvents\"}}{{/crossLink}} array.","         *  It will locate the iNode represented by the UI elements that received the event,","         *  slide a suitable instance on it and fire the same event on that node.","         *  @method _afterEvent","         *  @param ev {EventFacade} Event facade as produced by the event","         *  @private","         */","        _afterDomEvent: function(ev) {","            var fwNode =  ev.node;","            if (fwNode) {","                fwNode.fire(ev.type.split(':')[1], {domEvent:ev.domEvent});","            }","        },","        /**","         * Returns a string identifying the type of the object to handle the iNode","         * or null if type was not a FlyweightNode instance.","         * @method _getTypeString","         * @param iNode {Object} Internal node in the tree configuration","         * @return {String} type of iNode.","         * @private","         */","        _getTypeString: function (iNode) {","            var type = iNode.type || DEFAULT_POOL;","            if (!Lang.isString(type)) {","                if (Lang.isObject(type)) {","                    type = type.NAME;","                } else {","                    throw \"Node contains unknown type\";","                }","            }","            return type;","        },","        /**","         * Pulls from the pool an instance of the type declared in the given iNode","         * and slides it over that iNode.","         * If there are no instances of the given type in the pool, a new one will be created via {{#crossLink \"_createNode\"}}{{/crossLink}}","         * If an instance is held (see: {{#crossLink \"FlyweightTreeNode/hold\"}}{{/crossLink}}), it will be returned instead.","         * @method _poolFetch","         * @param iNode {Object} reference to a iNode within the configuration tree","         * @return {FlyweightTreeNode} Usually a subclass of FlyweightTreeNode positioned over the given iNode","         * @protected","         */","        _poolFetch: function(iNode) {","            var pool,","                fwNode = iNode._held,","                type = this._getTypeString(iNode);","","            if (fwNode) {","                return fwNode;","            }","            pool = this._pool[type];","            if (pool === undefined) {","                pool = this._pool[type] = [];","            }","            if (pool.length) {","                fwNode = pool.pop();","                fwNode._slideTo(iNode);","                return fwNode;","            }","            return this._createNode(iNode);","        },","        /**","         * Returns the FlyweightTreeNode instance to the pool.","         * Instances held (see: {{#crossLink \"FlyweightTreeNode/hold\"}}{{/crossLink}}) are never returned.","         * @method _poolReturn","         * @param fwNode {FlyweightTreeNode} Instance to return.","         * @protected","         */","        _poolReturn: function (fwNode) {","            if (fwNode._iNode._held) {","                return;","            }","            var pool,","                type = this._getTypeString(fwNode._iNode);","            pool = this._pool[type];","            if (pool) {","                pool.push(fwNode);","            }","","        },","        /**","         * Returns a new instance of the type given in iNode or the","         * {{#crossLink \"defaultType\"}}{{/crossLink}} if none specified","         * and slides it on top of the iNode provided.","         * @method _createNode","         * @param iNode {Object} reference to a iNode within the configuration tree","         * @return {FlyweightTreeNode} Instance of the corresponding subclass of FlyweightTreeNode","         * @protected","         */","        _createNode: function (iNode) {","            var newNode,","                Type = iNode.type || this.get('defaultType');","            if (Lang.isString(Type)) {","                Type = Y[Type];","            }","            if (Type) {","                newNode = new Type({root:this});","                if (newNode instanceof Y.FlyweightTreeNode) {","                    // I need to do this otherwise Attribute will initialize","                    // the real iNode with default values when activating a lazyAdd attribute.","                    newNode._slideTo({});","                    YArray.each(Y.Object.keys(newNode._state.data), newNode._addLazyAttr, newNode);","                    // newNode.getAttrs();","                    // That's it (see above)","                    newNode._root =  this;","                    newNode._slideTo(iNode);","                    return newNode;","                }","            }","            return null;","        },","        /**","         * Returns an instance of Flyweight node positioned over the root","         * @method getRoot","         * @return {FlyweightTreeNode}","         */","        getRoot: function () {","            return this._poolFetch(this._tree);","        },","        /**","         * Returns a string with the markup for the whole tree.","         * A subclass might opt to produce markup for those parts visible. (lazy rendering)","         * @method _getHTML","         * @return {String} HTML for this widget","         * @protected","         */","        _getHTML: function () {","            var s = '',","                root = this.getRoot();","            root.forSomeChildren( function (fwNode, index, array) {","                s += fwNode._getHTML(index, array.length, 0);","            });","            this._poolReturn(root);","            return s;","        },","        /**","         * Locates a iNode in the tree by the element that represents it.","         * @method _findINodeByElement","         * @param el {Node} Any element belonging to the tree","         * @return {Object} iNode that produced the markup for that element or null if not found","         * @protected","         */","        _findINodeByElement: function(el) {","            var id = el.ancestor(DOT + FWNode.CNAME_NODE, true).get('id'),","                found = null,","                scan = function (iNode) {","                    if (iNode.id === id) {","                        found = iNode;","                        return true;","                    }","                    if (iNode.children) {","                        return YArray.some(iNode.children, scan);","                    }","                    return false;","                };","            if (scan(this._tree)) {","                return found;","            }","            return null;","        },","        /**","         * Returns a FlyweightTreeNode instance from the pool, positioned over the iNode whose markup generated some event.","         * @method _poolFetchFromEvent","         * @param ev {EventFacade}","         * @return {FlyweightTreeNode} The FlyweightTreeNode instance or null if not found.","         * @private","         */","        _poolFetchFromEvent: function (ev) {","            var found = this._findINodeByElement(ev.domEvent.target);","            if (found) {","                return this._poolFetch(found);","            }","            return null;","        },","        /**","         * Traverses the whole configuration tree, calling a given function for each iNode.","         * If the function returns true, the traversing will terminate.","         * @method _forSomeINode","         * @param fn {Function} Function to call on each configuration iNode","         *		@param fn.iNode {Object} iNode in the configuration tree","         *		@param fn.depth {Integer} depth of this iNode within the tree","         *		@param fn.index {Integer} index of this iNode within the array of its siblings","         * @param scope {Object} scope to run the function in, defaults to `this`.","         * @return true if any of the function calls returned true (the traversal was terminated earlier)","         * @protected","         */","        _forSomeINode: function(fn, scope) {","            scope = scope || this;","            var loop = function(iNode, depth) {","                return YArray.some(iNode.children || [], function(childINode, index) {","                    if (fn.call(scope, childINode,depth, index)) {","                        return true;","                    }","                    return loop(childINode,depth + 1);","                });","            };","            return loop(this._tree, 0);","        },","        /**","         * Executes the given function over all the nodes in the tree or until the function returns true.","         * If dynamic loading is enabled, it will not run over nodes not yet loaded.","         * @method forSomeNodes","         * @param fn {function} function to execute on each node.  It will receive:","         *	@param fn.node {FlyweightTreeNode} node being visited.","         *	@param fn.depth {Integer} depth from the root. The root node is level zero and it is not traversed.","         *	@param fn.index {Integer} position of this node within its branch","         *	@param fn.array {Array} array containing itself and its siblings","         * @param scope {Object} Scope to run the function in.  Defaults to the FlyweightTreeManager instance.","         * @return {Boolean} true if any function calls returned true (the traversal was interrupted)","         */","        forSomeNodes: function (fn, scope) {","            scope = scope || this;","","            var forOneLevel = function (fwNode, depth) {","                fwNode.forSomeChildren(function (fwNode, index, array) {","                    if (fn.call(scope, fwNode, depth, index, array) === true) {","                        return true;","                    }","                    return forOneLevel(fwNode, depth+1);","                });","            };","            return forOneLevel(this.getRoot(), 1);","        },","        /**","         * Getter for the {{#crossLink \"focusedNode:attribute\"}}{{/crossLink}} attribute","         * @method _focusedNodeGetter","         * @return {FlyweightNode} Node that would have the focus if the widget is focused","         * @private","         */","        _focusedNodeGetter: function () {","            return this._poolFetch(this._focusedINode);","        },","        /**","         * Setter for the {{#crossLink \"focusedNode:attribute\"}}{{/crossLink}} attribute","         * @method _focusedNodeSetter","         * @param value {FlyweightNode} Node to receive the focus.","         * @return {Object} iNode matching the focused node.","         * @private","         */","        _focusedNodeSetter: function (value) {","            if (!value || value instanceof Y.FlyweightTreeNode) {","                var newINode = (value?value._iNode:this._tree.children[0]);","                this._focusOnINode(newINode);","                return newINode;","            } else {","                return Y.Attribute.INVALID_VALUE;","            }","        },","        /**","         * Sets the focus on the given iNode","         * @method _focusOnINode","         * @param iNode {Object} iNode to receive the focus","         * @private","         */","        _focusOnINode: function (iNode) {","            var prevINode = this._focusedINode,","                el,","                self = this,","                expand = function (iNode) {","                    iNode = iNode._parent;","                    if (iNode && iNode._parent) {","                        expand(iNode);","                        self._poolReturn(self._poolFetch(iNode).set('expanded', true));","                    }","                };","","            if (iNode && iNode !== prevINode) {","","                el = Y.one('#' + prevINode.id + ' .' + CNAME_CONTENT);","                el.blur();","                el.set(TABINDEX, -1);","","                expand(iNode);","","                el = Y.one('#' + iNode.id + ' .' + CNAME_CONTENT);","                el.focus();","                el.set(TABINDEX,0);","","                self._focusedINode = iNode;","","            }","","        },","        /**","         * Setter for the {{#crossLink \"dynamicLoader:attribute\"}}{{/crossLink}} attribute.","         * It changes the expanded attribute to false on childless iNodes not marked with `isLeaf","         * since they can now be expanded.","         * @method","         * @param value {Function | null } Function to handle the loading of nodes on demand","         * @return {Function | null | INVALID_VALUE} function set or rejection","         * @private","         */","        _dynamicLoaderSetter: function (value) {","            if (!Lang.isFunction(value) &&  value !== null) {","                return Y.Attribute.INVALID_VALUE;","            }","            if (value) {","                this._forSomeINode(function(iNode) {","                    if (!iNode.children) {","                        iNode.expanded = !!iNode.isLeaf;","                    }","                });","            }","            return value;","        }","    },","    {","        ATTRS: {","            /**","             * Default object type of the nodes if no explicit type is given in the configuration tree.","             * It can be specified as an object reference, these two are equivalent: `Y.FWTreeNode` or  `'FWTreeNode'`.","             *","             * @attribute defaultType","             * @type {String | Object}","             * @default 'FlyweightTreeNode'","             */","            defaultType: {","                value: 'FlyweightTreeNode'","            },","            /**","             * Function used to load the nodes dynamically.","             * Function will run in the scope of the FlyweightTreeManager instance and will","             * receive:","             *","             * * node {FlyweightTreeNode} reference to the parent of the children to be loaded.","             * * callback {Function} function to call with the configuration info for the children.","             *","             * The function shall fetch the nodes and create a configuration object","             * much like the one a whole tree might receive.","             * It is not limited to just one level of nodes, it might contain children elements as well.","             * When the data is processed, it should call the callback with the configuration object.","             * The function is responsible of handling any errors.","             * If the the callback is called with no arguments, the parent node will be marked as having no children.","             *","             * This attribute should be set before the tree is rendered as childless nodes","             * render differently when there is a dynamic loader than when there isn't.","             * (childless nodes can be expanded when a dynamic loader is present and the UI should reflect that).","             * @attribute dynamicLoader","             * @type {Function or null}","             * @default null","             */","            dynamicLoader: {","                value: null,","                setter: '_dynamicLoaderSetter'","            },","            /**","             * Points to the node that currently has the focus.","             * If read, please make sure to release the node instance to the pool when done.","             * @attribute focusedNode","             * @type FlyweightTreeNode","             * @default First node in the tree","             */","            focusedNode: {","                getter: '_focusedNodeGetter',","                setter: '_focusedNodeSetter'","                // There is no need for validator since the setter already takes care of validation.","            }","","        }","    });","","","Y.FlyweightTreeManager = FWMgr;","","","/**","* An implementation of the flyweight pattern.  This class should not be instantiated directly.","* Instances of this class can be requested from the flyweight manager class","*","* The FlyweightTreeManager will create instances of this class as required and","* pool them when not in use.","* The instances can be slid on top of the nodes (iNodes, for internal nodes)","* in literal object containing the definition","* of a tree and will take its state from the `iNode` it is slid upon.","* It relies for most of its functionality on the flyweight manager object,","* which contains most of the code.","* @class FlyweightTreeNode","* @extends Base","* @constructor  Do not instantiate directly.","*/","FWNode = Y.Base.create(","	FWNODE_NAME,","	Y.Base,","	[],","	{","		/**","		 * Reference to the iNode in the configuration tree it has been slid over.","		 * @property _iNode","		 * @type {Object}","		 * @private","		 **/","		_iNode:null,","		/**","		 * Reference to the FlyweightTreeManager instance this node belongs to.","		 * It is set by the root and should be considered read-only.","		 * @property _root","		 * @type FlyweightTreeManager","		 * @private","		 */","		_root: null,","        /**","         * Standard lifecycle method, reads the root node from the config","         * @method initializer","         * @param cfg {object} configuration data","         * @protected","         */","        initializer: function (cfg) {","            this._root = cfg.root;","        },","		/**","		 * Returns a string with the markup for this node along that of its children","		 * produced from its attributes rendered","		 * via the first template string it finds in these locations:","		 *","		 * * It's own {{#crossLink \"template\"}}{{/crossLink}} configuration attribute","		 * * The static {{#crossLink \"FlyweightTreeNode/TEMPLATE\"}}{{/crossLink}} class property","		 *","		 * @method _getHTML","		 * @param index {Integer} index of this node within the array of siblings","		 * @param nSiblings {Integer} number of siblings including this node","		 * @param depth {Integer} number of levels to the root","		 * @return {String} markup generated by this node","		 * @protected","		 */","		_getHTML: function(index, nSiblings, depth) {","			// assumes that if you asked for the HTML it is because you are rendering it","			var root = this._root,","                iNode = this._iNode,","				attrs = this.getAttrs(),","				s = '',","				templ = iNode.template,","				childCount = iNode.children && iNode.children.length,","				nodeClasses = [CNAME_NODE],","				superConstructor = this.constructor;","","			while (!templ) {","				templ = superConstructor.TEMPLATE;","				superConstructor = superConstructor.superclass.constructor;","","			}","","			iNode._rendered = true;","			if (childCount) {","				if (attrs.expanded) {","					iNode._childrenRendered = true;","					this.forSomeChildren( function (fwNode, index, array) {","						s += fwNode._getHTML(index, array.length, depth + 1);","					});","					nodeClasses.push(CNAME_EXPANDED);","				} else {","					nodeClasses.push(CNAME_COLLAPSED);","				}","			} else {","				if (this._root.get(DYNAMIC_LOADER) && !iNode.isLeaf) {","					nodeClasses.push(CNAME_COLLAPSED);","				} else {","					nodeClasses.push(CNAME_NOCHILDREN);","				}","			}","			if (index === 0) {","				nodeClasses.push(CNAME_FIRSTCHILD);","			}","			if (index === nSiblings - 1) {","				nodeClasses.push(CNAME_LASTCHILD);","			}","			attrs.children = s;","			attrs.cname_node = nodeClasses.join(' ');","			attrs.cname_content = CNAME_CONTENT;","			attrs.cname_children = CNAME_CHILDREN;","            attrs.tabIndex = (iNode === root._focusedINode)?0:-1;","","			return Lang.sub(templ, attrs);","","		},","		/**","		 * Method to slide this instance on top of another iNode in the configuration object","		 * @method _slideTo","		 * @param iNode {Object} iNode in the underlying configuration tree to slide this object on top of.","		 * @private","		 */","		_slideTo: function (iNode) {","			this._iNode = iNode;","			this._stateProxy = iNode;","		},","        /**","         * Whether this node has children.","         * If there are children, it actually returns the number of children,","         * otherwise it might return 0 or undefined.","         * @method hasChildren","         * @return {Boolean} true if the node has children","         */","        hasChildren: function () {","            var children = this._iNode.children;","            return !!(children && children.length);","        },","		/**","		 * Executes the given function on each of the child nodes of this node.","		 * @method forSomeChildren","		 * @param fn {Function} Function to be executed on each node","		 *		@param fn.child {FlyweightTreeNode} Instance of a suitable subclass of FlyweightTreeNode,","		 *		positioned on top of the child node","		 *		@param fn.index {Integer} Index of this child within the array of children","		 *		@param fn.array {Array} array containing itself and its siblings","		 * @param scope {object} The falue of this for the function.  Defaults to the parent.","		**/","		forSomeChildren: function(fn, scope) {","			var root = this._root,","				children = this._iNode.children,","				child, ret;","			scope = scope || this;","			if (children && children.length) {","				YArray.some(children, function (iNode, index, array) {","					child = root._poolFetch(iNode);","					ret = fn.call(scope, child, index, array);","					root._poolReturn(child);","					return ret;","				});","			}","		},","		/**","		 * Getter for the expanded configuration attribute.","		 * It is meant to be overriden by the developer.","		 * The supplied version defaults to true if the expanded property","		 * is not set in the underlying configuration tree.","		 * It can be overriden to default to false.","		 * @method _expandedGetter","		 * @return {Boolean} The expanded state of the node.","		 * @protected","		 */","		_expandedGetter: function () {","			return this._iNode.expanded !== false;","		},","		/**","		 * Setter for the expanded configuration attribute.","		 * It renders the child nodes if this branch has never been expanded.","		 * Then sets the className on the node to the static constants","		 * CNAME_COLLAPSED or CNAME_EXPANDED from Y.FlyweightTreeManager","		 * @method _expandedSetter","		 * @param value {Boolean} new value for the expanded attribute","		 * @private","		 */","		_expandedSetter: function (value) {","			var self = this,","				iNode = self._iNode,","				root = self._root,","				el = Y.one('#' + iNode.id),","				dynLoader = root.get(DYNAMIC_LOADER);","","			iNode.expanded = value = !!value;","			if (dynLoader && !iNode.isLeaf && (!iNode.children  || !iNode.children.length)) {","				this._loadDynamic();","				return;","			}","			if (el) {","                if (iNode.children && iNode.children.length) {","                    if (value) {","                        if (!iNode._childrenRendered) {","                            self._renderChildren();","                        }","                        el.replaceClass(CNAME_COLLAPSED, CNAME_EXPANDED);","                    } else {","                        el.replaceClass(CNAME_EXPANDED, CNAME_COLLAPSED);","                    }","                }","                el.set('aria-expanded', String(value));","            }","		},","		/**","		 * Triggers the dynamic loading of children for this node.","		 * @method _loadDynamic","		 * @private","		 */","		_loadDynamic: function () {","			var self = this,","				root = self._root;","			Y.one('#' + this.get('id')).replaceClass(CNAME_COLLAPSED, CNAME_LOADING);","			root.get(DYNAMIC_LOADER).call(root, self, Y.bind(self._dynamicLoadReturn, self));","","		},","		/**","		 * Callback for the dynamicLoader method.","		 * @method _dynamicLoadReturn","		 * @param response {Array} array of child iNodes","		 * @private","		 */","		_dynamicLoadReturn: function (response) {","			var self = this,","				iNode = self._iNode,","				root = self._root;","","			if (response) {","","				iNode.children = response;","				root._initNodes(iNode);","				self._renderChildren();","			} else {","				iNode.isLeaf = true;","			}","			// isLeaf might have been set in the response, not just in the line above.","			Y.one('#' + iNode.id).replaceClass(CNAME_LOADING, (iNode.isLeaf?CNAME_NOCHILDREN:CNAME_EXPANDED));","		},","		/**","		 * Renders the children of this node.","		 * It the children had been rendered, they will be replaced.","		 * @method _renderChildren","		 * @private","		 */","		_renderChildren: function () {","			var s = '',","				iNode = this._iNode,","				depth = this.get('depth');","			iNode._childrenRendered = true;","			this.forSomeChildren(function (fwNode, index, array) {","				s += fwNode._getHTML(index, array.length, depth + 1);","			});","			Y.one('#' + iNode.id + ' .' + CNAME_CHILDREN).setContent(s);","		},","		/**","		 * Prevents this instance from being returned to the pool and reused.","		 * Remember to {{#crossLink \"release\"}}{{/crossLink}} this instance when no longer needed.","		 * @method hold","		 * @chainable","		 */","		hold: function () {","			return (this._iNode._held = this);","		},","		/**","		 * Allows this instance to be returned to the pool and reused.","		 *","		 * __Important__: This instance should not be used after being released","		 * @method release","		 * @chainable","		 */","		release: function () {","			this._iNode._held = null;","			this._root._poolReturn(this);","			return this;","		},","		/**","		 * Returns the parent node for this node or null if none exists.","		 * The copy is on {{#crossLink \"hold\"}}{{/crossLink}}.","		 * Remember to {{#crossLink \"release\"}}{{/crossLink}} the copy to the pool when done.","		 * @method getParent","		 * @return FlyweightTreeNode","		 */","		getParent: function() {","			var iNode = this._iNode._parent;","			return (iNode?this._root._poolFetch(iNode).hold():null);","		},","		/**","		 * Returns the next sibling node for this node or null if none exists.","		 * The copy is on {{#crossLink \"hold\"}}{{/crossLink}}.","		 * Remember to {{#crossLink \"release\"}}{{/crossLink}} the copy to the pool when done.","		 * @method getNextSibling","		 * @return FlyweightTreeNode","		 */","		getNextSibling: function() {","			var parent = this._iNode._parent,","				siblings = (parent && parent.children) || [],","				index = siblings.indexOf(this) + 1;","			if (index === 0 || index > siblings.length) {","				return null;","			}","			return this._root._poolFetch(siblings[index]).hold();","		},","		/**","		 * Returns the previous sibling node for this node or null if none exists.","		 * The copy is on {{#crossLink \"hold\"}}{{/crossLink}}.","		 * Remember to {{#crossLink \"release\"}}{{/crossLink}} the copy to the pool when done.","		 * @method getPreviousSibling","		 * @return FlyweightTreeNode","		 */","		getPreviousSibling: function() {","			var parent = this._iNode._parent,","				siblings = (parent && parent.children) || [],","				index = siblings.indexOf(this) - 1;","			if (index < 0) {","				return null;","			}","			return this._root._poolFetch(siblings[index]).hold();","		},","        /**","         * Sets the focus to this node.","         * @method focus","         * @chainable","         */","        focus: function() {","            return this._root.set(FOCUSED, this);","        },","        /**","         * Removes the focus from this node","         * @method blur","         * @chainable","         */","        blur: function () {","            return this._root.set(FOCUSED, null);","        },","		/**","		 * Sugar method to toggle the expanded state of the node.","		 * @method toggle","		 * @chainable","		 */","		toggle: function() {","			return this.set(EXPANDED, !this.get(EXPANDED));","		},","        /**","         * Sugar method to expand a node","         * @method expand","         * @chainable","         */","        expand: function() {","            return this.set(EXPANDED, true);","        },","        /**","         * Sugar method to collapse this node","         * @method collapse","         * @chainable","         */","        collapse: function() {","            return this.set(EXPANDED, false);","        },","		/**","		 * Returns true if this node is the root node","		 * @method isRoot","		 * @return {Boolean} true if root node","		 */","		isRoot: function() {","			return this._root._tree === this._iNode;","		},","		/**","		* Gets the stored value for the attribute, from either the","		* internal state object, or the state proxy if it exits","		*","		* @method _getStateVal","		* @private","		* @param {String} name The name of the attribute","		* @return {Any} The stored value of the attribute","		*/","		_getStateVal : function(name) {","			var iNode = this._iNode;","			if (this._state.get(name, BYPASS_PROXY) || !iNode) {","				return this._state.get(name, VALUE);","			}","			if (iNode.hasOwnProperty(name)) {","				return iNode[name];","			}","			return this._state.get(name, VALUE);","		},","","		/**","		* Sets the stored value for the attribute, in either the","		* internal state object, or the state proxy if it exits","		*","		* @method _setStateVal","		* @private","		* @param {String} name The name of the attribute","		* @param {Any} value The value of the attribute","		*/","		_setStateVal : function(name, value) {","			var iNode = this._iNode;","			if (this._state.get(name, BYPASS_PROXY) || this._state.get(name, 'initializing') || !iNode) {","				this._state.add(name, VALUE, value);","			} else {","				iNode[name] = value;","			}","		}","	},","	{","		/**","		 * Template string to be used to render this node.","		 * It should be overriden by the subclass.","		 *","		 * It contains the HTML markup for this node plus placeholders,","		 * enclosed in curly braces, that have access to any of the","		 * configuration attributes of this node plus several predefined placeholders.","         *","         * It must contain at least three elements identified by their classNames:","","         +----------------------------+","         | {cname_node}               |","         | +------------------------+ |","         | | {cname_content}        | |","         | +------------------------+ |","         |                            |","         | +------------------------+ |","         | | {cname_children}       | |","         | +------------------------+ |","         +----------------------------+","","         * For example:","","         '<div id=\"{id}\" class=\"{cname_node}\" role=\"\" aria-expanded=\"{expanded}\">' +","               '<div tabIndex=\"{tabIndex}\" class=\"{cname_content}\">{label}</div>' +","               '<div class=\"{cname_children}\" role=\"group\">{children}</div>' +","         '</div>'","","         * The outermost container identified by the className `{cname_node}`","         * must also use the `{id}` placeholder to set the `id` of the node.","         * It should also have the proper ARIA role assigned and the","         * `aria-expanded` set to the `{expanded}` placeholder.","         *","         * It must contain two further elements:","         *","         * * A container for the contents of this node, identified by the className","         *   `{cname_content}` which should contain everything the user would associate","         *   with this node, such as the label and other status indicators","         *   such as toggle and selection indicators.","         *   This is the element that would receive the focus of the node, thus,","         *   it must have a `{tabIndex}` placeholder to receive the appropriate","         *   value for the `tabIndex` attribute.","         *","         * * The other element is the container for the children of this node.","         *   It will be identified by the className `{cname_children}` and it","         *   should enclose the placeholder `{children}`.","         *","		 * @property TEMPLATE","		 * @type {String}","		 * @default '<div id=\"{id}\" class=\"{cname_node}\" role=\"\" aria-expanded=\"{expanded}\"><div tabIndex=\"{tabIndex}\"","         class=\"{cname_content}\">{label}</div><div class=\"{cname_children}\" role=\"group\">{children}</div></div>'","		 * @static","		 */","		TEMPLATE: '<div id=\"{id}\" class=\"{cname_node}\" role=\"\" aria-expanded=\"{expanded}\">' +","                        '<div tabIndex=\"{tabIndex}\" class=\"{cname_content}\">{label}</div>' +","                        '<div class=\"{cname_children}\" role=\"group\">{children}</div>' +","                   '</div>',","		/**","		 * CCS className constant to use as the class name for the DOM element representing the node.","		 * @property CNAME_NODE","		 * @type String","		 * @static","		 */","		CNAME_NODE: CNAME_NODE,","		/**","		 * CCS className constant to use as the class name for the DOM element that will contain the label and/or status of this node.","		 * @property CNAME_CONTENT","		 * @type String","		 * @static","		 */","		CNAME_CONTENT: CNAME_CONTENT,","		/**","		 * CCS className constant to use as the class name for the DOM element that will contain the children of this node.","		 * @property CNAME_CHILDREN","		 * @type String","		 * @static","		 */","		CNAME_CHILDREN: CNAME_CHILDREN,","		/**","		 * CCS className constant added to the DOM element for this node when its state is not expanded.","		 * @property CNAME_COLLAPSED","		 * @type String","		 * @static","		 */","		CNAME_COLLAPSED: CNAME_COLLAPSED,","		/**","		 * CCS className constant added to the DOM element for this node when its state is expanded.","		 * @property CNAME_EXPANDED","		 * @type String","		 * @static","		 */","		CNAME_EXPANDED: CNAME_EXPANDED,","		/**","		 * CCS className constant added to the DOM element for this node when it has no children.","		 * @property CNAME_NOCHILDREN","		 * @type String","		 * @static","		 */","		CNAME_NOCHILDREN: CNAME_NOCHILDREN,","		/**","		 * CCS className constant added to the DOM element for this node when it is the first in the group.","		 * @property CNAME_FIRSTCHILD","		 * @type String","		 * @static","		 */","		CNAME_FIRSTCHILD: CNAME_FIRSTCHILD,","		/**","		 * CCS className constant added to the DOM element for this node when it is the last in the group.","		 * @property CNAME_LASTCHILD","		 * @type String","		 * @static","		 */","		CNAME_LASTCHILD: CNAME_LASTCHILD,","		/**","		 * CCS className constant added to the DOM element for this node when dynamically loading its children.","		 * @property CNAME_LOADING","		 * @type String","		 * @static","		 */","		CNAME_LOADING: CNAME_LOADING,","		ATTRS: {","			/**","			 * Reference to the FlyweightTreeManager this node belongs to","			 * @attribute root","			 * @type {FlyweightTreeManager}","			 * @readOnly","			 *","			 */","","			root: {","				_bypassProxy: true,","				readOnly: true,","				getter: function() {","					return this._root;","				}","			},","","			/**","			 * Template to use on this particular instance.","			 * The renderer will default to the static TEMPLATE property of this class","			 * (the preferred way) or the nodeTemplate configuration attribute of the root.","			 * See the TEMPLATE static property.","			 * @attribute template","			 * @type {String}","			 * @default undefined","			 */","			template: {","				validator: Lang.isString","			},","			/**","			 * Label for this node. Nodes usually have some textual content, this is the place for it.","			 * @attribute label","			 * @type {String}","			 * @default ''","			 */","			label: {","				validator: Lang.isString,","				value: ''","			},","			/**","			 * Id to assign to the DOM element that contains this node.","			 * If none was supplied, it will generate one","			 * @attribute id","			 * @type {Identifier}","			 * @default guid()","			 * @readOnly","			 */","			id: {","				readOnly: true","			},","			/**","			 * Returns the depth of this node from the root.","			 * This is calculated on-the-fly.","			 * @attribute depth","			 * @type Integer","			 * @readOnly","			 */","			depth: {","				_bypassProxy: true,","				readOnly: true,","				getter: function () {","					var count = 0,","						iNode = this._iNode;","					while (iNode._parent) {","						count += 1;","						iNode = iNode._parent;","					}","					return count-1;","				}","			},","			/**","			 * Expanded state of this node.","			 * @attribute expanded","			 * @type Boolean","			 * @default true","			 */","			expanded: {","				_bypassProxy: true,","				getter: '_expandedGetter',","				setter: '_expandedSetter'","			}","		}","	}",");","Y.FlyweightTreeNode = FWNode;","","","","}, '@VERSION@', {\"requires\": [\"widget\", \"base-build\"], \"skinnable\": false});"];
+_yuitest_coverage["build/gallery-flyweight-tree/gallery-flyweight-tree.js"].lines = {"1":0,"35":0,"37":0,"55":0,"95":0,"155":0,"156":0,"164":0,"165":0,"167":0,"168":0,"169":0,"171":0,"197":0,"200":0,"209":0,"211":0,"212":0,"213":0,"214":0,"216":0,"217":0,"219":0,"220":0,"221":0,"222":0,"224":0,"226":0,"237":0,"246":0,"248":0,"249":0,"250":0,"251":0,"271":0,"272":0,"273":0,"274":0,"275":0,"276":0,"278":0,"289":0,"290":0,"291":0,"302":0,"303":0,"304":0,"322":0,"323":0,"324":0,"325":0,"326":0,"327":0,"330":0,"332":0,"333":0,"334":0,"335":0,"336":0,"338":0,"340":0,"351":0,"352":0,"353":0,"365":0,"366":0,"367":0,"368":0,"370":0,"373":0,"386":0,"390":0,"391":0,"393":0,"394":0,"395":0,"397":0,"398":0,"399":0,"400":0,"402":0,"412":0,"413":0,"415":0,"417":0,"418":0,"419":0,"433":0,"435":0,"436":0,"438":0,"439":0,"440":0,"443":0,"444":0,"447":0,"448":0,"449":0,"452":0,"460":0,"470":0,"472":0,"473":0,"475":0,"476":0,"486":0,"489":0,"490":0,"491":0,"493":0,"494":0,"496":0,"498":0,"499":0,"501":0,"511":0,"512":0,"513":0,"515":0,"530":0,"531":0,"532":0,"533":0,"534":0,"536":0,"539":0,"554":0,"556":0,"557":0,"558":0,"559":0,"561":0,"564":0,"573":0,"583":0,"584":0,"585":0,"586":0,"588":0,"598":0,"602":0,"603":0,"604":0,"605":0,"609":0,"611":0,"612":0,"613":0,"615":0,"617":0,"618":0,"619":0,"621":0,"636":0,"637":0,"639":0,"640":0,"641":0,"642":0,"646":0,"705":0,"723":0,"750":0,"769":0,"778":0,"779":0,"780":0,"784":0,"785":0,"786":0,"787":0,"788":0,"789":0,"791":0,"793":0,"796":0,"797":0,"799":0,"802":0,"803":0,"805":0,"806":0,"808":0,"809":0,"810":0,"811":0,"812":0,"814":0,"824":0,"825":0,"835":0,"836":0,"849":0,"852":0,"853":0,"854":0,"855":0,"856":0,"857":0,"858":0,"873":0,"885":0,"891":0,"892":0,"893":0,"894":0,"896":0,"897":0,"898":0,"899":0,"900":0,"902":0,"904":0,"907":0,"916":0,"918":0,"919":0,"929":0,"933":0,"935":0,"936":0,"937":0,"939":0,"942":0,"951":0,"954":0,"955":0,"956":0,"958":0,"967":0,"977":0,"978":0,"979":0,"989":0,"990":0,"1000":0,"1003":0,"1004":0,"1006":0,"1016":0,"1019":0,"1020":0,"1022":0,"1030":0,"1038":0,"1046":0,"1054":0,"1062":0,"1070":0,"1082":0,"1083":0,"1084":0,"1086":0,"1087":0,"1089":0,"1102":0,"1103":0,"1104":0,"1106":0,"1244":0,"1292":0,"1294":0,"1295":0,"1296":0,"1298":0,"1315":0};
+_yuitest_coverage["build/gallery-flyweight-tree/gallery-flyweight-tree.js"].functions = {"cName:54":0,"initializer:154":0,"(anonymous 2):164":0,"(anonymous 3):168":0,"destructor:163":0,"_loadConfig:196":0,"(anonymous 4):211":0,"_initNodes:208":0,"renderUI:236":0,"(anonymous 5):250":0,"bindUI:245":0,"fire:270":0,"(anonymous 6):289":0,"expandAll:288":0,"(anonymous 7):302":0,"collapseAll:301":0,"fn:326":0,"(anonymous 8):332":0,"getNodeBy:321":0,"_afterDomEvent:350":0,"_getTypeString:364":0,"_poolFetch:385":0,"_poolReturn:411":0,"_createNode:432":0,"getRoot:459":0,"(anonymous 9):472":0,"_getHTML:469":0,"scan:488":0,"_findINodeByElement:485":0,"_poolFetchFromEvent:510":0,"(anonymous 10):532":0,"loop:531":0,"_forSomeINode:529":0,"(anonymous 11):557":0,"forOneLevel:556":0,"forSomeNodes:553":0,"_focusedNodeGetter:572":0,"_focusedNodeSetter:582":0,"expand:601":0,"_focusOnINode:597":0,"(anonymous 12):640":0,"_dynamicLoaderSetter:635":0,"initializer:749":0,"(anonymous 13):788":0,"_getHTML:767":0,"_slideTo:823":0,"hasChildren:834":0,"(anonymous 14):854":0,"forSomeChildren:848":0,"_expandedGetter:872":0,"_expandedSetter:884":0,"_loadDynamic:915":0,"_dynamicLoadReturn:928":0,"(anonymous 15):955":0,"_renderChildren:950":0,"hold:966":0,"release:976":0,"getParent:988":0,"getNextSibling:999":0,"getPreviousSibling:1015":0,"focus:1029":0,"blur:1037":0,"toggle:1045":0,"expand:1053":0,"collapse:1061":0,"isRoot:1069":0,"_getStateVal:1081":0,"_setStateVal:1101":0,"getter:1243":0,"getter:1291":0,"(anonymous 1):1":0};
+_yuitest_coverage["build/gallery-flyweight-tree/gallery-flyweight-tree.js"].coveredLines = 266;
+_yuitest_coverage["build/gallery-flyweight-tree/gallery-flyweight-tree.js"].coveredFunctions = 71;
 _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1);
 YUI.add('gallery-flyweight-tree', function (Y, NAME) {
 
+/**
+* An implementation of the flyweight pattern for rendering tree-structured data.
+*
+* This module is made of two components, the manager and the nodes.
+* The manager, FlyweightTreeManager, holds a definition of the tree in an internal, private object
+* which is completely passive, with no methods, events or attributes.
+* This is the internal tree configuration and the nodes of that tree are called iNodes
+* for 'internal nodes'.
+*
+* When any action needs to be taken on any node, the manager takes a node instance
+* (an instance of FlyweightTreeNode or, more often, a subclass of it)
+* from the pool of instances, or creates one if none is available and slides it
+* on top of the iNode holding its state and then performs the action as if
+* the node instance had always been there.
+*
+* The manager is a subclass of Widget and contains the overall container for the tree.
+* Nodes are a subclass of Base and they are rendered from markup resulting of
+* processing its template with its attributes and several pre-defined placeholders.
+*
+* Nodes should not be instantiated directly but requested from the manager.
+* Nodes are automatically generated by the manager in response to events.
+* They are returned to the pool of nodes once the event listener return.
+* The user should not hold references to nodes provided to event listeners
+* or the callback of the tree traversal methods, since the manager will return
+* them to the pool.  If the user needs to keep a reference, the `hold` method
+* can be used to preserve it.
+* On the other hand, for methods that do return a permanent reference or
+* references marked as held, the user is responsible for calling `release`
+* when no longer required so that the manager can return them to the pool.
+*
+* @module gallery-flyweight-tree
+*/
 _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 1)", 1);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 3);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 35);
 'use strict';
 /*jslint white: true */
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 5);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 37);
 var Lang = Y.Lang,
 	YArray = Y.Array,
 
@@ -57,8 +89,8 @@ var Lang = Y.Lang,
     FWNODE_NAME = 'flyweight-tree-node',
 	CNAME_NODE = getCName(FWNODE_NAME),
 	cName = function (name) {
-		_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "cName", 22);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 23);
+		_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "cName", 54);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 55);
 return getCName(FWNODE_NAME, name);
 	},
     CNAME_CONTENT = cName('content'),
@@ -72,11 +104,6 @@ return getCName(FWNODE_NAME, name);
 
 	FWMgr,
 	FWNode;
-
-/**
-* @module gallery-flyweight-tree
-*
-*/
 
 /**
  * Widget to handle its child nodes by using the flyweight pattern.
@@ -104,7 +131,7 @@ return getCName(FWNODE_NAME, name);
  * @constructor
  */
 
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 68);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 95);
 FWMgr = Y.Base.create(
     NAME,
     Y.Widget,
@@ -165,10 +192,10 @@ FWMgr = Y.Base.create(
          * @protected
          */
         initializer:function () {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "initializer", 127);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 128);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "initializer", 154);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 155);
 this._pool = {};
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 129);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 156);
 this._eventHandles = [];
         },
         /**
@@ -177,22 +204,22 @@ this._eventHandles = [];
          * @protected
          */
         destructor: function () {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "destructor", 136);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 137);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "destructor", 163);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 164);
 YArray.each(this._pool, function (fwNode) {
-                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 2)", 137);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 138);
+                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 2)", 164);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 165);
 fwNode.destroy();
             });
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 140);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 167);
 this._pool = null;
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 141);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 168);
 YArray.each(this._eventHandles, function (evHandle) {
-                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 3)", 141);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 142);
+                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 3)", 168);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 169);
 evHandle.detach();
             });
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 144);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 171);
 this._eventHandles = null;
 
         },
@@ -219,46 +246,53 @@ this._eventHandles = null;
          * @protected
          */
         _loadConfig: function (tree) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_loadConfig", 169);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 170);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_loadConfig", 196);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 197);
 this._tree = {
                 children: Y.clone(tree)
             };
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 173);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 200);
 this._initNodes(this._tree);
 
         },
         /** Initializes the iNodes configuration with default values and management info.
          * @method _initNodes
          * @param parentINode {Object} Parent of the iNodes to be set
-         * @private
+         * @protected
          */
         _initNodes: function (parentINode) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_initNodes", 181);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 182);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_initNodes", 208);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 209);
 var self = this,
                 dynLoad = !!self.get(DYNAMIC_LOADER);
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 184);
-YArray.each(parentINode.children, function (iNode) {
-                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 4)", 184);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 185);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 211);
+YArray.each(parentINode.children, function (iNode, i) {
+                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 4)", 211);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 212);
+if (Lang.isString(iNode)) {
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 213);
+iNode = {label: iNode};
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 214);
+parentINode.children[i] = iNode;
+                }
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 216);
 if (!self._focusedINode) {
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 186);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 217);
 self._focusedINode = iNode;
                 }
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 188);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 219);
 iNode._parent = parentINode;
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 189);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 220);
 iNode.id = iNode.id || Y.guid();
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 190);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 221);
 if (dynLoad && !iNode.children) {
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 191);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 222);
 iNode.expanded = !!iNode.isLeaf;
                 } else {
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 193);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 224);
 iNode.expanded = (iNode.expanded === undefined) || !!iNode.expanded;
                 }
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 195);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 226);
 self._initNodes(iNode);
             });
         },
@@ -270,8 +304,8 @@ self._initNodes(iNode);
 		 * @protected
 		 */
 		renderUI: function () {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "renderUI", 205);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 206);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "renderUI", 236);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 237);
 this.get(CBX).setHTML(this._getHTML());
         },
         /**
@@ -281,18 +315,18 @@ this.get(CBX).setHTML(this._getHTML());
          * @protected
          */
         bindUI: function() {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "bindUI", 214);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 215);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "bindUI", 245);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 246);
 var self = this;
 
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 217);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 248);
 self._eventHandles.push(self.after('focus', self._afterFocus));
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 218);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 249);
 if (self._domEvents) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 219);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 250);
 YArray.each(self._domEvents, function (event) {
-                    _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 5)", 219);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 220);
+                    _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 5)", 250);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 251);
 self._eventHandles.push(self.after(event, self._afterDomEvent, self));
                 });
             }
@@ -313,21 +347,21 @@ self._eventHandles.push(self.after(event, self._afterDomEvent, self));
          * @return {Boolean} false if the event was halted.
          */
         fire: function (type, ev) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "fire", 239);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 240);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "fire", 270);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 271);
 var ret, self = this;
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 241);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 272);
 if (ev && ev.domEvent) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 242);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 273);
 ev.node = self._poolFetchFromEvent(ev);
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 243);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 274);
 ret = FWMgr.superclass.fire.call(self, type, ev);
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 244);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 275);
 self._poolReturn(ev.node);
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 245);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 276);
 return ret;
             }
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 247);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 278);
 return FWMgr.superclass.fire.apply(self, arguments);
         },
         /**
@@ -339,16 +373,85 @@ return FWMgr.superclass.fire.apply(self, arguments);
          * @chainable
          */
         expandAll: function () {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "expandAll", 257);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 258);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "expandAll", 288);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 289);
 this._forSomeINode(function(iNode) {
-                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 6)", 258);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 259);
+                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 6)", 289);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 290);
 if (iNode.children && !iNode.expanded) {
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 260);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 291);
 this._poolReturn(this._poolFetch(iNode).set(EXPANDED, true));
                 }
             });
+        },
+        /**
+         * Collapses all the nodes of the tree.
+         *
+         * @method collapseAll
+         * @chainable
+         */
+        collapseAll: function () {
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "collapseAll", 301);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 302);
+this._forSomeINode(function(iNode) {
+                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 7)", 302);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 303);
+if (iNode.children && iNode.expanded) {
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 304);
+this._poolReturn(this._poolFetch(iNode).set(EXPANDED, false));
+                }
+            });
+        },
+        /**
+         * Finds a node by attribute value or by condition.
+         * If the first argument is a string, it must be the name of an attribute
+         * and the second argument the value sought.
+         * If the first argument is a function, it should return true on finding
+         * the node sought. The function will receive a node reference.
+         * It returns the node sought or null.
+         * The node is on hold and it must be released once used.
+         * @method getNodeBy
+         * @param attr {String or Function} Either an attribute name or a matching function
+         * @param value {Any} if the first argument is a string, the second is the value to match
+         * @return {FWNode or null} The node found or null
+         */
+        getNodeBy: function (attr, value) {
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getNodeBy", 321);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 322);
+var fn,found = null;
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 323);
+if (Lang.isFunction(attr)) {
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 324);
+fn = attr;
+            } else {_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 325);
+if (Lang.isString(attr)) {
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 326);
+fn = function (node) {
+                    _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "fn", 326);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 327);
+return node.get(attr) === value;
+                };
+            } else {
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 330);
+return null;
+            }}
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 332);
+this.forSomeNodes(function (node) {
+                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 8)", 332);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 333);
+if (fn(node)) {
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 334);
+found = node;
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 335);
+found.hold();
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 336);
+return true;
+                }
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 338);
+return false;
+            });
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 340);
+return found;
         },
 
         /** Generic event listener for DOM events listed in the {{#crossLink "_domEvents"}}{{/crossLink}} array.
@@ -359,12 +462,12 @@ this._poolReturn(this._poolFetch(iNode).set(EXPANDED, true));
          *  @private
          */
         _afterDomEvent: function(ev) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_afterDomEvent", 272);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 273);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_afterDomEvent", 350);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 351);
 var fwNode =  ev.node;
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 274);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 352);
 if (fwNode) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 275);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 353);
 fwNode.fire(ev.type.split(':')[1], {domEvent:ev.domEvent});
             }
         },
@@ -377,21 +480,21 @@ fwNode.fire(ev.type.split(':')[1], {domEvent:ev.domEvent});
          * @private
          */
         _getTypeString: function (iNode) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_getTypeString", 286);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 287);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_getTypeString", 364);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 365);
 var type = iNode.type || DEFAULT_POOL;
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 288);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 366);
 if (!Lang.isString(type)) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 289);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 367);
 if (Lang.isObject(type)) {
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 290);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 368);
 type = type.NAME;
                 } else {
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 292);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 370);
 throw "Node contains unknown type";
                 }
             }
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 295);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 373);
 return type;
         },
         /**
@@ -405,34 +508,34 @@ return type;
          * @protected
          */
         _poolFetch: function(iNode) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_poolFetch", 307);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 308);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_poolFetch", 385);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 386);
 var pool,
                 fwNode = iNode._held,
                 type = this._getTypeString(iNode);
 
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 312);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 390);
 if (fwNode) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 313);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 391);
 return fwNode;
             }
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 315);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 393);
 pool = this._pool[type];
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 316);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 394);
 if (pool === undefined) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 317);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 395);
 pool = this._pool[type] = [];
             }
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 319);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 397);
 if (pool.length) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 320);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 398);
 fwNode = pool.pop();
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 321);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 399);
 fwNode._slideTo(iNode);
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 322);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 400);
 return fwNode;
             }
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 324);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 402);
 return this._createNode(iNode);
         },
         /**
@@ -443,20 +546,20 @@ return this._createNode(iNode);
          * @protected
          */
         _poolReturn: function (fwNode) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_poolReturn", 333);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 334);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_poolReturn", 411);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 412);
 if (fwNode._iNode._held) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 335);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 413);
 return;
             }
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 337);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 415);
 var pool,
                 type = this._getTypeString(fwNode._iNode);
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 339);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 417);
 pool = this._pool[type];
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 340);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 418);
 if (pool) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 341);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 419);
 pool.push(fwNode);
             }
 
@@ -471,38 +574,38 @@ pool.push(fwNode);
          * @protected
          */
         _createNode: function (iNode) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_createNode", 354);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 355);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_createNode", 432);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 433);
 var newNode,
                 Type = iNode.type || this.get('defaultType');
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 357);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 435);
 if (Lang.isString(Type)) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 358);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 436);
 Type = Y[Type];
             }
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 360);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 438);
 if (Type) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 361);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 439);
 newNode = new Type({root:this});
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 362);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 440);
 if (newNode instanceof Y.FlyweightTreeNode) {
                     // I need to do this otherwise Attribute will initialize
                     // the real iNode with default values when activating a lazyAdd attribute.
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 365);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 443);
 newNode._slideTo({});
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 366);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 444);
 YArray.each(Y.Object.keys(newNode._state.data), newNode._addLazyAttr, newNode);
                     // newNode.getAttrs();
                     // That's it (see above)
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 369);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 447);
 newNode._root =  this;
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 370);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 448);
 newNode._slideTo(iNode);
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 371);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 449);
 return newNode;
                 }
             }
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 374);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 452);
 return null;
         },
         /**
@@ -511,8 +614,8 @@ return null;
          * @return {FlyweightTreeNode}
          */
         getRoot: function () {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getRoot", 381);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 382);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getRoot", 459);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 460);
 return this._poolFetch(this._tree);
         },
         /**
@@ -523,19 +626,19 @@ return this._poolFetch(this._tree);
          * @protected
          */
         _getHTML: function () {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_getHTML", 391);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 392);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_getHTML", 469);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 470);
 var s = '',
                 root = this.getRoot();
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 394);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 472);
 root.forSomeChildren( function (fwNode, index, array) {
-                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 7)", 394);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 395);
+                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 9)", 472);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 473);
 s += fwNode._getHTML(index, array.length, 0);
             });
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 397);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 475);
 this._poolReturn(root);
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 398);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 476);
 return s;
         },
         /**
@@ -546,33 +649,33 @@ return s;
          * @protected
          */
         _findINodeByElement: function(el) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_findINodeByElement", 407);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 408);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_findINodeByElement", 485);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 486);
 var id = el.ancestor(DOT + FWNode.CNAME_NODE, true).get('id'),
                 found = null,
                 scan = function (iNode) {
-                    _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "scan", 410);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 411);
+                    _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "scan", 488);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 489);
 if (iNode.id === id) {
-                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 412);
+                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 490);
 found = iNode;
-                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 413);
+                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 491);
 return true;
                     }
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 415);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 493);
 if (iNode.children) {
-                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 416);
+                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 494);
 return YArray.some(iNode.children, scan);
                     }
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 418);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 496);
 return false;
                 };
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 420);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 498);
 if (scan(this._tree)) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 421);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 499);
 return found;
             }
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 423);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 501);
 return null;
         },
         /**
@@ -583,15 +686,15 @@ return null;
          * @private
          */
         _poolFetchFromEvent: function (ev) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_poolFetchFromEvent", 432);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 433);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_poolFetchFromEvent", 510);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 511);
 var found = this._findINodeByElement(ev.domEvent.target);
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 434);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 512);
 if (found) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 435);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 513);
 return this._poolFetch(found);
             }
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 437);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 515);
 return null;
         },
         /**
@@ -607,25 +710,25 @@ return null;
          * @protected
          */
         _forSomeINode: function(fn, scope) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_forSomeINode", 451);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 452);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_forSomeINode", 529);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 530);
 scope = scope || this;
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 453);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 531);
 var loop = function(iNode, depth) {
-                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "loop", 453);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 454);
+                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "loop", 531);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 532);
 return YArray.some(iNode.children || [], function(childINode, index) {
-                    _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 8)", 454);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 455);
+                    _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 10)", 532);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 533);
 if (fn.call(scope, childINode,depth, index)) {
-                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 456);
+                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 534);
 return true;
                     }
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 458);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 536);
 return loop(childINode,depth + 1);
                 });
             };
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 461);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 539);
 return loop(this._tree, 0);
         },
         /**
@@ -641,26 +744,26 @@ return loop(this._tree, 0);
          * @return {Boolean} true if any function calls returned true (the traversal was interrupted)
          */
         forSomeNodes: function (fn, scope) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "forSomeNodes", 475);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 476);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "forSomeNodes", 553);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 554);
 scope = scope || this;
 
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 478);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 556);
 var forOneLevel = function (fwNode, depth) {
-                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "forOneLevel", 478);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 479);
+                _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "forOneLevel", 556);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 557);
 fwNode.forSomeChildren(function (fwNode, index, array) {
-                    _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 9)", 479);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 480);
+                    _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 11)", 557);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 558);
 if (fn.call(scope, fwNode, depth, index, array) === true) {
-                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 481);
+                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 559);
 return true;
                     }
-                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 483);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 561);
 return forOneLevel(fwNode, depth+1);
                 });
             };
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 486);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 564);
 return forOneLevel(this.getRoot(), 1);
         },
         /**
@@ -670,8 +773,8 @@ return forOneLevel(this.getRoot(), 1);
          * @private
          */
         _focusedNodeGetter: function () {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_focusedNodeGetter", 494);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 495);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_focusedNodeGetter", 572);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 573);
 return this._poolFetch(this._focusedINode);
         },
         /**
@@ -682,17 +785,17 @@ return this._poolFetch(this._focusedINode);
          * @private
          */
         _focusedNodeSetter: function (value) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_focusedNodeSetter", 504);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 505);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_focusedNodeSetter", 582);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 583);
 if (!value || value instanceof Y.FlyweightTreeNode) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 506);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 584);
 var newINode = (value?value._iNode:this._tree.children[0]);
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 507);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 585);
 this._focusOnINode(newINode);
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 508);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 586);
 return newINode;
             } else {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 510);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 588);
 return Y.Attribute.INVALID_VALUE;
             }
         },
@@ -703,30 +806,47 @@ return Y.Attribute.INVALID_VALUE;
          * @private
          */
         _focusOnINode: function (iNode) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_focusOnINode", 519);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 520);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_focusOnINode", 597);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 598);
 var prevINode = this._focusedINode,
-                el;
+                el,
+                self = this,
+                expand = function (iNode) {
+                    _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "expand", 601);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 602);
+iNode = iNode._parent;
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 603);
+if (iNode && iNode._parent) {
+                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 604);
+expand(iNode);
+                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 605);
+self._poolReturn(self._poolFetch(iNode).set('expanded', true));
+                    }
+                };
 
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 523);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 609);
 if (iNode && iNode !== prevINode) {
 
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 525);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 611);
 el = Y.one('#' + prevINode.id + ' .' + CNAME_CONTENT);
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 526);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 612);
 el.blur();
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 527);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 613);
 el.set(TABINDEX, -1);
 
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 529);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 615);
+expand(iNode);
+
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 617);
 el = Y.one('#' + iNode.id + ' .' + CNAME_CONTENT);
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 530);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 618);
 el.focus();
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 531);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 619);
 el.set(TABINDEX,0);
 
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 533);
-this._focusedINode = iNode;
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 621);
+self._focusedINode = iNode;
+
             }
 
         },
@@ -740,25 +860,25 @@ this._focusedINode = iNode;
          * @private
          */
         _dynamicLoaderSetter: function (value) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_dynamicLoaderSetter", 546);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 547);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_dynamicLoaderSetter", 635);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 636);
 if (!Lang.isFunction(value) &&  value !== null) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 548);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 637);
 return Y.Attribute.INVALID_VALUE;
             }
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 550);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 639);
 if (value) {
-                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 551);
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 640);
 this._forSomeINode(function(iNode) {
-                    _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 10)", 551);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 552);
+                    _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 12)", 640);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 641);
 if (!iNode.children) {
-                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 553);
+                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 642);
 iNode.expanded = !!iNode.isLeaf;
                     }
                 });
             }
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 557);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 646);
 return value;
         }
     },
@@ -818,25 +938,26 @@ return value;
     });
 
 
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 616);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 705);
 Y.FlyweightTreeManager = FWMgr;
-/**
-* An implementation of the flyweight pattern.
-* This object can be slid on top of a literal object containing the definition
-* of a tree and will take its state from that iNode it is slid upon.
-* It relies for most of its functionality on the flyweight manager object,
-* which contains most of the code.
-* @module gallery-flyweight-tree
-*/
+
 
 /**
 * An implementation of the flyweight pattern.  This class should not be instantiated directly.
 * Instances of this class can be requested from the flyweight manager class
+*
+* The FlyweightTreeManager will create instances of this class as required and
+* pool them when not in use.
+* The instances can be slid on top of the nodes (iNodes, for internal nodes)
+* in literal object containing the definition
+* of a tree and will take its state from the `iNode` it is slid upon.
+* It relies for most of its functionality on the flyweight manager object,
+* which contains most of the code.
 * @class FlyweightTreeNode
 * @extends Base
 * @constructor  Do not instantiate directly.
 */
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 633);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 723);
 FWNode = Y.Base.create(
 	FWNODE_NAME,
 	Y.Base,
@@ -864,8 +985,8 @@ FWNode = Y.Base.create(
          * @protected
          */
         initializer: function (cfg) {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "initializer", 659);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 660);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "initializer", 749);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 750);
 this._root = cfg.root;
         },
 		/**
@@ -885,8 +1006,8 @@ this._root = cfg.root;
 		 */
 		_getHTML: function(index, nSiblings, depth) {
 			// assumes that if you asked for the HTML it is because you are rendering it
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_getHTML", 677);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 679);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_getHTML", 767);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 769);
 var root = this._root,
                 iNode = this._iNode,
 				attrs = this.getAttrs(),
@@ -896,67 +1017,67 @@ var root = this._root,
 				nodeClasses = [CNAME_NODE],
 				superConstructor = this.constructor;
 
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 688);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 778);
 while (!templ) {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 689);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 779);
 templ = superConstructor.TEMPLATE;
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 690);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 780);
 superConstructor = superConstructor.superclass.constructor;
 
 			}
 
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 694);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 784);
 iNode._rendered = true;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 695);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 785);
 if (childCount) {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 696);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 786);
 if (attrs.expanded) {
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 697);
+					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 787);
 iNode._childrenRendered = true;
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 698);
+					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 788);
 this.forSomeChildren( function (fwNode, index, array) {
-						_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 11)", 698);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 699);
+						_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 13)", 788);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 789);
 s += fwNode._getHTML(index, array.length, depth + 1);
 					});
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 701);
+					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 791);
 nodeClasses.push(CNAME_EXPANDED);
 				} else {
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 703);
+					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 793);
 nodeClasses.push(CNAME_COLLAPSED);
 				}
 			} else {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 706);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 796);
 if (this._root.get(DYNAMIC_LOADER) && !iNode.isLeaf) {
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 707);
+					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 797);
 nodeClasses.push(CNAME_COLLAPSED);
 				} else {
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 709);
+					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 799);
 nodeClasses.push(CNAME_NOCHILDREN);
 				}
 			}
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 712);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 802);
 if (index === 0) {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 713);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 803);
 nodeClasses.push(CNAME_FIRSTCHILD);
 			}
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 715);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 805);
 if (index === nSiblings - 1) {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 716);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 806);
 nodeClasses.push(CNAME_LASTCHILD);
 			}
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 718);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 808);
 attrs.children = s;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 719);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 809);
 attrs.cname_node = nodeClasses.join(' ');
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 720);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 810);
 attrs.cname_content = CNAME_CONTENT;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 721);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 811);
 attrs.cname_children = CNAME_CHILDREN;
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 722);
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 812);
 attrs.tabIndex = (iNode === root._focusedINode)?0:-1;
 
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 724);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 814);
 return Lang.sub(templ, attrs);
 
 		},
@@ -967,12 +1088,26 @@ return Lang.sub(templ, attrs);
 		 * @private
 		 */
 		_slideTo: function (iNode) {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_slideTo", 733);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 734);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_slideTo", 823);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 824);
 this._iNode = iNode;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 735);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 825);
 this._stateProxy = iNode;
 		},
+        /**
+         * Whether this node has children.
+         * If there are children, it actually returns the number of children,
+         * otherwise it might return 0 or undefined.
+         * @method hasChildren
+         * @return {Boolean} true if the node has children
+         */
+        hasChildren: function () {
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "hasChildren", 834);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 835);
+var children = this._iNode.children;
+            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 836);
+return !!(children && children.length);
+        },
 		/**
 		 * Executes the given function on each of the child nodes of this node.
 		 * @method forSomeChildren
@@ -984,25 +1119,25 @@ this._stateProxy = iNode;
 		 * @param scope {object} The falue of this for the function.  Defaults to the parent.
 		**/
 		forSomeChildren: function(fn, scope) {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "forSomeChildren", 747);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 748);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "forSomeChildren", 848);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 849);
 var root = this._root,
 				children = this._iNode.children,
 				child, ret;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 751);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 852);
 scope = scope || this;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 752);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 853);
 if (children && children.length) {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 753);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 854);
 YArray.some(children, function (iNode, index, array) {
-					_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 12)", 753);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 754);
+					_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 14)", 854);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 855);
 child = root._poolFetch(iNode);
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 755);
+					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 856);
 ret = fn.call(scope, child, index, array);
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 756);
+					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 857);
 root._poolReturn(child);
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 757);
+					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 858);
 return ret;
 				});
 			}
@@ -1018,8 +1153,8 @@ return ret;
 		 * @protected
 		 */
 		_expandedGetter: function () {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_expandedGetter", 771);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 772);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_expandedGetter", 872);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 873);
 return this._iNode.expanded !== false;
 		},
 		/**
@@ -1032,41 +1167,44 @@ return this._iNode.expanded !== false;
 		 * @private
 		 */
 		_expandedSetter: function (value) {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_expandedSetter", 783);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 784);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_expandedSetter", 884);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 885);
 var self = this,
 				iNode = self._iNode,
 				root = self._root,
 				el = Y.one('#' + iNode.id),
 				dynLoader = root.get(DYNAMIC_LOADER);
 
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 790);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 891);
 iNode.expanded = value = !!value;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 791);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 892);
 if (dynLoader && !iNode.isLeaf && (!iNode.children  || !iNode.children.length)) {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 792);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 893);
 this._loadDynamic();
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 793);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 894);
 return;
 			}
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 795);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 896);
+if (el) {
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 897);
 if (iNode.children && iNode.children.length) {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 796);
+                    _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 898);
 if (value) {
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 797);
+                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 899);
 if (!iNode._childrenRendered) {
-						_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 798);
+                            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 900);
 self._renderChildren();
-					}
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 800);
+                        }
+                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 902);
 el.replaceClass(CNAME_COLLAPSED, CNAME_EXPANDED);
-				} else {
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 802);
+                    } else {
+                        _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 904);
 el.replaceClass(CNAME_EXPANDED, CNAME_COLLAPSED);
-				}
-			}
-            _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 805);
+                    }
+                }
+                _yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 907);
 el.set('aria-expanded', String(value));
+            }
 		},
 		/**
 		 * Triggers the dynamic loading of children for this node.
@@ -1074,13 +1212,13 @@ el.set('aria-expanded', String(value));
 		 * @private
 		 */
 		_loadDynamic: function () {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_loadDynamic", 812);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 813);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_loadDynamic", 915);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 916);
 var self = this,
 				root = self._root;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 815);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 918);
 Y.one('#' + this.get('id')).replaceClass(CNAME_COLLAPSED, CNAME_LOADING);
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 816);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 919);
 root.get(DYNAMIC_LOADER).call(root, self, Y.bind(self._dynamicLoadReturn, self));
 
 		},
@@ -1091,27 +1229,27 @@ root.get(DYNAMIC_LOADER).call(root, self, Y.bind(self._dynamicLoadReturn, self))
 		 * @private
 		 */
 		_dynamicLoadReturn: function (response) {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_dynamicLoadReturn", 825);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 826);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_dynamicLoadReturn", 928);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 929);
 var self = this,
 				iNode = self._iNode,
 				root = self._root;
 
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 830);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 933);
 if (response) {
 
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 832);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 935);
 iNode.children = response;
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 833);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 936);
 root._initNodes(iNode);
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 834);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 937);
 self._renderChildren();
 			} else {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 836);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 939);
 iNode.isLeaf = true;
 			}
 			// isLeaf might have been set in the response, not just in the line above.
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 839);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 942);
 Y.one('#' + iNode.id).replaceClass(CNAME_LOADING, (iNode.isLeaf?CNAME_NOCHILDREN:CNAME_EXPANDED));
 		},
 		/**
@@ -1121,20 +1259,20 @@ Y.one('#' + iNode.id).replaceClass(CNAME_LOADING, (iNode.isLeaf?CNAME_NOCHILDREN
 		 * @private
 		 */
 		_renderChildren: function () {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_renderChildren", 847);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 848);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_renderChildren", 950);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 951);
 var s = '',
 				iNode = this._iNode,
 				depth = this.get('depth');
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 851);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 954);
 iNode._childrenRendered = true;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 852);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 955);
 this.forSomeChildren(function (fwNode, index, array) {
-				_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 13)", 852);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 853);
+				_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "(anonymous 15)", 955);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 956);
 s += fwNode._getHTML(index, array.length, depth + 1);
 			});
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 855);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 958);
 Y.one('#' + iNode.id + ' .' + CNAME_CHILDREN).setContent(s);
 		},
 		/**
@@ -1144,8 +1282,8 @@ Y.one('#' + iNode.id + ' .' + CNAME_CHILDREN).setContent(s);
 		 * @chainable
 		 */
 		hold: function () {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "hold", 863);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 864);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "hold", 966);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 967);
 return (this._iNode._held = this);
 		},
 		/**
@@ -1156,69 +1294,69 @@ return (this._iNode._held = this);
 		 * @chainable
 		 */
 		release: function () {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "release", 873);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 874);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "release", 976);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 977);
 this._iNode._held = null;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 875);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 978);
 this._root._poolReturn(this);
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 876);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 979);
 return this;
 		},
 		/**
 		 * Returns the parent node for this node or null if none exists.
-		 * The copy is not on {{#crossLink "hold"}}{{/crossLink}}.
-		 * Remember to release the copy to the pool when done.
+		 * The copy is on {{#crossLink "hold"}}{{/crossLink}}.
+		 * Remember to {{#crossLink "release"}}{{/crossLink}} the copy to the pool when done.
 		 * @method getParent
 		 * @return FlyweightTreeNode
 		 */
 		getParent: function() {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getParent", 885);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 886);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getParent", 988);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 989);
 var iNode = this._iNode._parent;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 887);
-return (iNode?this._root._poolFetch(iNode):null);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 990);
+return (iNode?this._root._poolFetch(iNode).hold():null);
 		},
 		/**
 		 * Returns the next sibling node for this node or null if none exists.
-		 * The copy is not on {{#crossLink "hold"}}{{/crossLink}}.
-		 * Remember to release the copy to the pool when done.
+		 * The copy is on {{#crossLink "hold"}}{{/crossLink}}.
+		 * Remember to {{#crossLink "release"}}{{/crossLink}} the copy to the pool when done.
 		 * @method getNextSibling
 		 * @return FlyweightTreeNode
 		 */
 		getNextSibling: function() {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getNextSibling", 896);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 897);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getNextSibling", 999);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1000);
 var parent = this._iNode._parent,
 				siblings = (parent && parent.children) || [],
 				index = siblings.indexOf(this) + 1;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 900);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1003);
 if (index === 0 || index > siblings.length) {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 901);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1004);
 return null;
 			}
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 903);
-return this._root._poolFetch(siblings[index]);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1006);
+return this._root._poolFetch(siblings[index]).hold();
 		},
 		/**
 		 * Returns the previous sibling node for this node or null if none exists.
-		 * The copy is not on {{#crossLink "hold"}}{{/crossLink}}.
-		 * Remember to release the copy to the pool when done.
+		 * The copy is on {{#crossLink "hold"}}{{/crossLink}}.
+		 * Remember to {{#crossLink "release"}}{{/crossLink}} the copy to the pool when done.
 		 * @method getPreviousSibling
 		 * @return FlyweightTreeNode
 		 */
 		getPreviousSibling: function() {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getPreviousSibling", 912);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 913);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getPreviousSibling", 1015);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1016);
 var parent = this._iNode._parent,
 				siblings = (parent && parent.children) || [],
 				index = siblings.indexOf(this) - 1;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 916);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1019);
 if (index < 0) {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 917);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1020);
 return null;
 			}
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 919);
-return this._root._poolFetch(siblings[index]);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1022);
+return this._root._poolFetch(siblings[index]).hold();
 		},
         /**
          * Sets the focus to this node.
@@ -1226,8 +1364,8 @@ return this._root._poolFetch(siblings[index]);
          * @chainable
          */
         focus: function() {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "focus", 926);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 927);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "focus", 1029);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1030);
 return this._root.set(FOCUSED, this);
         },
         /**
@@ -1236,8 +1374,8 @@ return this._root.set(FOCUSED, this);
          * @chainable
          */
         blur: function () {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "blur", 934);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 935);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "blur", 1037);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1038);
 return this._root.set(FOCUSED, null);
         },
 		/**
@@ -1246,8 +1384,8 @@ return this._root.set(FOCUSED, null);
 		 * @chainable
 		 */
 		toggle: function() {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "toggle", 942);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 943);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "toggle", 1045);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1046);
 return this.set(EXPANDED, !this.get(EXPANDED));
 		},
         /**
@@ -1256,8 +1394,8 @@ return this.set(EXPANDED, !this.get(EXPANDED));
          * @chainable
          */
         expand: function() {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "expand", 950);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 951);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "expand", 1053);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1054);
 return this.set(EXPANDED, true);
         },
         /**
@@ -1266,8 +1404,8 @@ return this.set(EXPANDED, true);
          * @chainable
          */
         collapse: function() {
-            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "collapse", 958);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 959);
+            _yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "collapse", 1061);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1062);
 return this.set(EXPANDED, false);
         },
 		/**
@@ -1276,8 +1414,8 @@ return this.set(EXPANDED, false);
 		 * @return {Boolean} true if root node
 		 */
 		isRoot: function() {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "isRoot", 966);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 967);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "isRoot", 1069);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1070);
 return this._root._tree === this._iNode;
 		},
 		/**
@@ -1290,20 +1428,20 @@ return this._root._tree === this._iNode;
 		* @return {Any} The stored value of the attribute
 		*/
 		_getStateVal : function(name) {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_getStateVal", 978);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 979);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_getStateVal", 1081);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1082);
 var iNode = this._iNode;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 980);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1083);
 if (this._state.get(name, BYPASS_PROXY) || !iNode) {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 981);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1084);
 return this._state.get(name, VALUE);
 			}
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 983);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1086);
 if (iNode.hasOwnProperty(name)) {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 984);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1087);
 return iNode[name];
 			}
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 986);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1089);
 return this._state.get(name, VALUE);
 		},
 
@@ -1317,15 +1455,15 @@ return this._state.get(name, VALUE);
 		* @param {Any} value The value of the attribute
 		*/
 		_setStateVal : function(name, value) {
-			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_setStateVal", 998);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 999);
+			_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "_setStateVal", 1101);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1102);
 var iNode = this._iNode;
-			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1000);
+			_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1103);
 if (this._state.get(name, BYPASS_PROXY) || this._state.get(name, 'initializing') || !iNode) {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1001);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1104);
 this._state.add(name, VALUE, value);
 			} else {
-				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1003);
+				_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1106);
 iNode[name] = value;
 			}
 		}
@@ -1464,8 +1602,8 @@ iNode[name] = value;
 				_bypassProxy: true,
 				readOnly: true,
 				getter: function() {
-					_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getter", 1140);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1141);
+					_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getter", 1243);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1244);
 return this._root;
 				}
 			},
@@ -1514,18 +1652,18 @@ return this._root;
 				_bypassProxy: true,
 				readOnly: true,
 				getter: function () {
-					_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getter", 1188);
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1189);
+					_yuitest_coverfunc("build/gallery-flyweight-tree/gallery-flyweight-tree.js", "getter", 1291);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1292);
 var count = 0,
 						iNode = this._iNode;
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1191);
+					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1294);
 while (iNode._parent) {
-						_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1192);
+						_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1295);
 count += 1;
-						_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1193);
+						_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1296);
 iNode = iNode._parent;
 					}
-					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1195);
+					_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1298);
 return count-1;
 				}
 			},
@@ -1543,7 +1681,7 @@ return count-1;
 		}
 	}
 );
-_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1212);
+_yuitest_coverline("build/gallery-flyweight-tree/gallery-flyweight-tree.js", 1315);
 Y.FlyweightTreeNode = FWNode;
 
 

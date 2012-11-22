@@ -27,7 +27,7 @@
 * On the other hand, for methods that do return a permanent reference or
 * references marked as held, the user is responsible for calling `release`
 * when no longer required so that the manager can return them to the pool.
-* 
+*
 * @module gallery-flyweight-tree
 */
 'use strict';

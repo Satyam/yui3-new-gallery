@@ -71,6 +71,16 @@ FWTV = Y.Base.create(
 			this._domEvents = ['click'];
 			this._loadConfig(config.tree);
 		},
+        /**
+         * Overrides the same function to process the selected attribute
+         * @method _initNodes
+         * @param parentINode {Object} Parent of the iNodes to be set
+         * @protected
+         */
+        _initNodes: function (parentINode) {
+            FWTV.superclass._initNodes.call(this, parentINode);
+            parentINode.selected = parentINode.selected?FULLY_SELECTED:NOT_SELECTED;
+        },
 		/**
 		 * Widget lifecyle method.
          * Adds the `tree` role to the content box.

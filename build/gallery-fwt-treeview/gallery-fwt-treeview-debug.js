@@ -97,6 +97,16 @@ FWTV = Y.Base.create(
 			this._domEvents = ['click'];
 			this._loadConfig(config.tree);
 		},
+        /**
+         * Overrides the same function to process the selected attribute
+         * @method _initNodes
+         * @param parentINode {Object} Parent of the iNodes to be set
+         * @protected
+         */
+        _initNodes: function (parentINode) {
+            FWTV.superclass._initNodes.call(this, parentINode);
+            parentINode.selected = parentINode.selected?FULLY_SELECTED:NOT_SELECTED;
+        },
 		/**
 		 * Widget lifecyle method.
          * Adds the `tree` role to the content box.
@@ -331,16 +341,16 @@ FWTV = Y.Base.create(
  * @param ev.domEvent {Object} The original event produced by the DOM
  * @param ev.node {FWTreeNode} The node that had the focus when the key was pressed
  */
-Y.FWTreeView = FWTV;/** This class must not be generated directly.
+Y.FWTreeView = FWTV;/**
+ *  @module gallery-fwt-treeview
+ */
+/**
+ *  This class must not be generated directly.
  *  Instances of it will be provided by FWTreeView as required.
  *
  *  Subclasses might be defined based on it.
  *  Usually, they will add further attributes and redefine the TEMPLATE to
  *  show those extra attributes.
- *
- *  @module gallery-fwt-treeview
- */
-/**
  *
  *  @class FWTreeNode
  *  @extends FlyweightTreeNode
@@ -480,6 +490,14 @@ Y.FWTreeView = FWTV;/** This class must not be generated directly.
             '<div tabIndex="{tabIndex}" class="{cname_content}"><div class="{cname_toggle}"></div>' +
             '<div class="{cname_icon}"></div><div class="{cname_selection}"></div><div class="{cname_label}">{label}</div></div>' +
             '<ul class="{cname_children}" role="group">{children}</ul></li>', CNAMES),
+        /**
+         * Collection of classNames to set in the template.
+         * @property CNAMES
+         * @type Object
+         * @static
+         * @final
+         */
+        CNAMES: CNAMES,
 		/**
 		 * Constant to use with the `selected` attribute to indicate the node is not selected.
 		 * @property NOT_SELECTED

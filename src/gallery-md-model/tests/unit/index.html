@@ -1,0 +1,152 @@
+<!doctype html>
+<html>
+	<head>
+		<meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+		<title>GalleryModel Test</title>
+		<script type="text/javascript" src="/build/yui/yui.js"></script>
+        <script src="js/model-tests.js"></script>
+	</head>
+	<body  class="yui3-skin-sam">
+        <div id="log"></div>
+        <script type="text/javascript">
+			YUI({
+				filter: (window.location.search.match(/[?&]filter=([^&]+)/) || [])[1] || 'raw',
+				coverage:['gallery-md-model'] 
+			}).use('gallery-md-model','model-tests', 'test','test-console', function (Y) {
+				(new Y.Console()).render('#log');
+				 
+                Y.Test.Runner.setName('gallery-md-model');
+				Y.Test.Runner.run();				
+			});
+			
+			/*
+				The following is the example code shown in the YUI Gallery
+
+			YUI({
+				filter:'raw',
+				groups: {
+					js: {
+						base: '../../../build/',
+						modules: {
+							'gallery-md-model': {
+								path: 'gallery-md-model/gallery-md-model.js',
+								requires: ['base']
+							}
+						}
+					}
+				}
+			}).use('gallery-md-model','json', function(Y) {
+				var MyModel = Y.Base.create(
+					'my-model',
+					Y.GalleryModel,
+					[],
+					{
+						sync: function (action, options, callback) {
+							switch (action) {
+								case 'read':
+									callback(null, Y.merge({fieldOne: 1, fieldTwo: 2}, options));
+									break;
+								case 'create':
+								case 'update':
+								case 'delete':
+									callback(null);
+									break;
+								default:
+									callback('operation not allowed');
+									break;
+							}
+						},
+						// Method toJSON() is originally set to call method getValues()
+						// Having toJSON() separate from getValues() allows redefining toJSON()
+						// without messing up getValues()
+						toJSON: function() {
+							return {
+								// getPKValues() (PK: primary key) returns an object with the values for the primary key(s)
+								keys: this.getPKValues(),
+								// getChangeValues() returns an object with the previous and new values 
+								// for all fields changed since last synched with the remote source
+								values: this.getChangedValues()
+							};
+						}
+					},
+					{
+						ATTRS: {
+							// primaryKeys is now an attribute and can take multiple fields
+							// If only one, a single string (not an array) can be provided
+							primaryKeys: {
+								value: ['primaryKey1', 'primaryKey2']
+							}
+						}
+					}
+				);
+				var myModel = new MyModel();
+				
+				// isNew and isModified are now attributes
+				console.log('new model', myModel.get('isNew'), myModel.get('isModified'));
+				// should show: "new model true false"
+				
+				myModel.load({primaryKey1: 12, primaryKey2: 34}, function(err, response) {
+					console.log('loaded model', myModel.get('isNew'), myModel.get('isModified'));
+					// should show: "loaded model false false"
+					
+					// Field values are read/set via getValue/setValue methods
+					console.log('fieldOne: ', myModel.getValue('fieldOne'));
+					// should show: "fieldOne: 1"
+					
+					myModel.setValue('fieldOne', 3);
+					
+					// You can query the status of individual fields or the whole record
+					console.log('fieldOne status: ', myModel.get('isNew.fieldOne'),myModel.get('isModified.fieldOne'));
+					// should show: "fieldOne status: false true"
+					console.log('fieldTwo status: ', myModel.get('isNew.fieldTwo'),myModel.get('isModified.fieldTwo'));
+					// should show: "fieldTwo status: false false"
+					console.log('record status: ', myModel.get('isNew'), myModel.get('isModified'));
+					// should show: "record status: false true"
+					
+					console.log('Stringified record', Y.JSON.stringify(myModel));					
+					// should show: "Stringified record {"keys":{"primaryKey1":12,"primaryKey2":34},"values":{"fieldOne":{"prevVal":1,"newVal":3}}}"
+					/*
+					Having the previous value for the changed field allows for building SQL statements such as:
+						UPDATE myTable set fieldOne = 3 where primaryKey1 = 12 and primaryKey2 = 34 and fieldOne = 1
+					The last conditional ensures that the modification is applied 
+					only if the field to be changed has not been modified by other user
+					* /
+					
+					// The following will fail:
+					myModel.setValue('primaryKey1', 'whatever');
+					// primary keys cannot be modified
+					
+					// The change event listener can serve to reject or modify a value being set
+					myModel.on('change', function (ev) {
+						switch (ev.name) {
+							// fieldOne will have its values doubled
+							case 'fieldOne':
+								ev.newVal *= 2;
+								break;
+							// fieldTwo will reject even values
+							case 'fieldTwo':
+							 	if (ev.newVal === Math.floor(ev.newVal / 2) * 2) {
+							 		ev.halt();
+							 	}
+								break;
+						}
+					});
+					myModel.setValue('fieldOne', 7);
+					console.log('fieldOne=7 doubled: ', myModel.getValue('fieldOne'));
+					// should show: "fieldOne=7 doubled: 14"
+					myModel.setValue('fieldTwo', 7);
+					console.log('fieldTwo=7 accepted: ', myModel.getValue('fieldTwo'));
+					// should show: "fieldTwo=7 accepted: 7"
+					myModel.setValue('fieldTwo', 6);
+					console.log('fieldTwo=6 rejected: ', myModel.getValue('fieldTwo'));
+					// should show: "fieldTwo=6 rejected: 7"
+					
+				
+				});
+			});
+			*/
+		</script>
+
+	</body>
+</html>
+

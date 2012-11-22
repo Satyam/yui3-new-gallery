@@ -9,6 +9,7 @@
 		<a href="out/index.html">API docs</a>
 		<h1>A Tree:</h1>
 		<div id="container"></div>
+        <div id="plainDynLoader"></div>
 		<h1>A dynamic tree with multiple node types:</h1>
 		<p>The nodes of this tree are read from YQL, any replies rely on that service.
             The nodes have references to albums and artists so that by clicking on them
@@ -79,9 +80,24 @@
 
 				]});
 				tv.render('#container');
-                tv.after('mouseover', function (ev) {
-                    console.log('mousing over', ev);
-                });
+
+				(new Y.FWTreeView({
+                    tree: [
+                        'label 0',
+                        'label 1',
+                        'label 2'
+                    ],
+                    dynamicLoader: function (node, callback) {
+
+                        var i,
+                            label = node.get('label'),
+                            branch = [];
+                        for (i = 0; i < 3; i+=1) {
+                            branch[i] = label + '-' + i;
+                        }
+                        callback(branch);
+                    }
+                })).render('#plainDynLoader');
 
 //
                 var ArtistNode = Y.Base.create(
@@ -91,7 +107,7 @@
 					{
 
 					},{
-						TEMPLATE: '<li id="{id}" class="artistnode {cname_node}"><div tabIndex="{tabIndex}" class="yui3-flyweight-tree-node-content"><div class="yui3-fw-treeview-toggle"><\/div><div class="yui3-fw-treeview-label">{label}<\/div></div><ul class="{cname_children}">{children}<\/ul><\/li>',
+						TEMPLATE: Y.Lang.sub('<li id="{id}" class="artistnode {cname_node}"><div tabIndex="{tabIndex}" class="{cname_content}"><div class="{cname_toggle}"><\/div><div class="{cname_label}">{label} <div class="artistNavigate"></div><\/div></div><ul class="{cname_children}">{children}<\/ul><\/li>',Y.FWTreeNode.CNAMES),
 						ATTRS: {
 							url: {},
 							artistId: {}
@@ -220,6 +236,9 @@
 					});
                     artistTree.render('#dynTree');
                     artistTree.after(['click', 'enterkey'], function (ev) {
+                        if (ev.type.split(':')[1] == 'enterkey' || ev.domEvent.target.hasClass('artistNavigate')) {
+
+                        }
                         var url = ev.node.get('url');
                         console.log('url', url);
                         if (url) {
