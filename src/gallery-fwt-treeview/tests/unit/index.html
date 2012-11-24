@@ -8,12 +8,12 @@
 	</head>
 	<body  class="yui3-skin-sam">
         <div id="log"></div>
-        <div id="container"></div>
+        <div id="container" class="yui3-fw-treeview-checkbox"></div>
         <script type="text/javascript">
 			YUI({
 				filter: (window.location.search.match(/[?&]filter=([^&]+)/) || [])[1] || 'raw',
 				coverage:['gallery-fwt-treeview']
-			}).use('gallery-fwt-treeview','treeview-tests', 'test','test-console', function (Y) {
+			}).use('gallery-fwt-treeview','treeview-tests', 'test','test-console','node-event-simulate', function (Y) {
 				(new Y.Console()).render('#log');
 
                 Y.Test.Runner.setName('gallery-fwt-treeview');

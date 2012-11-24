@@ -108,13 +108,26 @@ FWTV = Y.Base.create(
          * @private
          */
         _onKeyDown: function (ev) {
-            var ch = ev.charCode,
+            var self = this,
+                key = ev.keyCode,
                 iNode = this._focusedINode,
                 seq = this._visibleSequence,
                 index = this._visibleIndex,
-                fwNode;
+                fwNode,
+                fireKey = function (which) {
+                    fwNode = self._poolFetch(iNode);
+                    ev.container = ev.target;
+                    ev.target = Y.one('#' + iNode.id);
+                    var newEv = {
+                        domEvent:ev,
+                        node: fwNode
+                    };
+                    self.fire(which, newEv);
+                    fwNode.fire(which);
+                    self._poolReturn(fwNode);
+                };
 
-            switch (ch) {
+            switch (key) {
                 case 38: // up
                     if (!seq) {
                         seq = this._rebuildSequence();
@@ -123,7 +136,7 @@ FWTV = Y.Base.create(
                     index -=1;
                     if (index >= 0) {
                         iNode = seq[index];
-                        this._visibleIndex = index;
+                        self._visibleIndex = index;
                     } else {
                         iNode = null;
                     }
@@ -136,82 +149,64 @@ FWTV = Y.Base.create(
                             iNode = null;
                         }
                     } else {
-                        this._poolReturn(this._poolFetch(iNode).set(EXPANDED, true));
+                        self._poolReturn(self._poolFetch(iNode).set(EXPANDED, true));
                         iNode = null;
                     }
 
                     break;
                 case 40: // down
                     if (!seq) {
-                        seq = this._rebuildSequence();
+                        seq = self._rebuildSequence();
                         index = seq.indexOf(iNode);
                     }
                     index +=1;
                     if (index < seq.length) {
                         iNode = seq[index];
-                        this._visibleIndex = index;
+                        self._visibleIndex = index;
                     } else {
                         iNode = null;
                     }
                     break;
                 case 37: // left
                     if (iNode.expanded && iNode.children) {
-                        this._poolReturn(this._poolFetch(iNode).set(EXPANDED, false));
+                        self._poolReturn(self._poolFetch(iNode).set(EXPANDED, false));
                         iNode = null;
                     } else {
                         iNode = iNode._parent;
-                        if (iNode === this._tree) {
+                        if (iNode === self._tree) {
                             iNode = null;
                         }
                     }
 
                     break;
                 case 36: // home
-                    iNode = this._tree.children && this._tree.children[0];
+                    iNode = self._tree.children && self._tree.children[0];
                     break;
                 case 35: // end
-                    index = this._tree.children && this._tree.children.length;
+                    index = self._tree.children && self._tree.children.length;
                     if (index) {
-                        iNode = this._tree.children[index -1];
+                        iNode = self._tree.children[index -1];
                     } else {
                         iNode = null;
                     }
                     break;
                 case 13: // enter
-                    fwNode = this._poolFetch(iNode);
-                    this.fire('enterkey', {
-                        domEvent:ev,
-                        node: fwNode
-                    });
-                    fwNode.fire('enterkey', {
-                        domEvent:ev,
-                        node: fwNode
-                    });
-                    this._poolReturn(fwNode);
+                    fireKey('enterkey');
                     iNode = null;
                     break;
                 case 32: // spacebar
-                    fwNode = this._poolFetch(iNode);
-                    this.fire('spacebar', {
-                        domEvent:ev,
-                        node: fwNode
-                    });
-                    fwNode.fire('spacebar', {
-                        domEvent:ev,
-                        node: fwNode
-                    });
-                    this._poolReturn(fwNode);
+                    fireKey('spacebar');
                     iNode = null;
                     break;
                 case 106: // asterisk on the numeric keypad
-                    this.expandAll();
+                    self.expandAll();
                     break;
                 default: // initial
                     iNode = null;
                     break;
             }
             if (iNode) {
-                this._focusOnINode(iNode);
+                self._focusOnINode(iNode);
                 ev.halt();
                 return false;
             }

@@ -166,7 +166,9 @@ FWMgr = Y.Base.create(
 		 * @protected
 		 */
 		renderUI: function () {
-            this.get(CBX).setHTML(this._getHTML());
+            var root = this.getRoot();
+            root._renderChildren(this.get(CBX));
+            root.release();
         },
         /**
          * Initializes the events for its internal use and those requested in
@@ -251,7 +253,7 @@ FWMgr = Y.Base.create(
          * @return {FWNode or null} The node found or null
          */
         getNodeBy: function (attr, value) {
-            var fn,found = null;
+            var fn, found = null;
             if (Lang.isFunction(attr)) {
                 fn = attr;
             } else if (Lang.isString(attr)) {
@@ -315,6 +317,7 @@ FWMgr = Y.Base.create(
          * @protected
          */
         _poolFetch: function(iNode) {
+
             var pool,
                 fwNode = iNode._held,
                 type = this._getTypeString(iNode);
@@ -350,7 +353,6 @@ FWMgr = Y.Base.create(
             if (pool) {
                 pool.push(fwNode);
             }
-
         },
         /**
          * Returns a new instance of the type given in iNode or the
@@ -391,22 +393,6 @@ FWMgr = Y.Base.create(
          */
         getRoot: function () {
             return this._poolFetch(this._tree).hold();
-        },
-        /**
-         * Returns a string with the markup for the whole tree.
-         * A subclass might opt to produce markup for those parts visible. (lazy rendering)
-         * @method _getHTML
-         * @return {String} HTML for this widget
-         * @protected
-         */
-        _getHTML: function () {
-            var s = '',
-                root = this.getRoot();
-            root.forSomeChildren( function (fwNode, index, array) {
-                s += fwNode._getHTML(index, array.length, 0);
-            });
-            root.release();
-            return s;
         },
         /**
          * Locates a iNode in the tree by the element that represents it.
@@ -491,7 +477,7 @@ FWMgr = Y.Base.create(
                         if (fn.call(scope, fwNode, depth, index, array) === true) {
                             return true;
                         }
-                        return forOneLevel(fwNode, depth+1);
+                        return forOneLevel(fwNode, depth + 1);
                     });
                 },
                 ret = forOneLevel(root, 1);
@@ -505,7 +491,7 @@ FWMgr = Y.Base.create(
          * @private
          */
         _focusedNodeGetter: function () {
-            return this._poolFetch(this._focusedINode);
+            return this._poolFetch(this._focusedINode).hold();
         },
         /**
          * Setter for the {{#crossLink "focusedNode:attribute"}}{{/crossLink}} attribute
@@ -622,7 +608,8 @@ FWMgr = Y.Base.create(
             },
             /**
              * Points to the node that currently has the focus.
-             * If read, please make sure to release the node instance to the pool when done.
+             * If read, the node returned is placed on hold.
+             * Please make sure to release the node instance to the pool when done.
              * @attribute focusedNode
              * @type FlyweightTreeNode
              * @default First node in the tree

@@ -134,13 +134,26 @@ FWTV = Y.Base.create(
          * @private
          */
         _onKeyDown: function (ev) {
-            var ch = ev.charCode,
+            var self = this,
+                key = ev.keyCode,
                 iNode = this._focusedINode,
                 seq = this._visibleSequence,
                 index = this._visibleIndex,
-                fwNode;
+                fwNode,
+                fireKey = function (which) {
+                    fwNode = self._poolFetch(iNode);
+                    ev.container = ev.target;
+                    ev.target = Y.one('#' + iNode.id);
+                    var newEv = {
+                        domEvent:ev,
+                        node: fwNode
+                    };
+                    self.fire(which, newEv);
+                    fwNode.fire(which);
+                    self._poolReturn(fwNode);
+                };
 
-            switch (ch) {
+            switch (key) {
                 case 38: // up
                     if (!seq) {
                         seq = this._rebuildSequence();
@@ -149,7 +162,7 @@ FWTV = Y.Base.create(
                     index -=1;
                     if (index >= 0) {
                         iNode = seq[index];
-                        this._visibleIndex = index;
+                        self._visibleIndex = index;
                     } else {
                         iNode = null;
                     }
@@ -162,82 +175,64 @@ FWTV = Y.Base.create(
                             iNode = null;
                         }
                     } else {
-                        this._poolReturn(this._poolFetch(iNode).set(EXPANDED, true));
+                        self._poolReturn(self._poolFetch(iNode).set(EXPANDED, true));
                         iNode = null;
                     }
 
                     break;
                 case 40: // down
                     if (!seq) {
-                        seq = this._rebuildSequence();
+                        seq = self._rebuildSequence();
                         index = seq.indexOf(iNode);
                     }
                     index +=1;
                     if (index < seq.length) {
                         iNode = seq[index];
-                        this._visibleIndex = index;
+                        self._visibleIndex = index;
                     } else {
                         iNode = null;
                     }
                     break;
                 case 37: // left
                     if (iNode.expanded && iNode.children) {
-                        this._poolReturn(this._poolFetch(iNode).set(EXPANDED, false));
+                        self._poolReturn(self._poolFetch(iNode).set(EXPANDED, false));
                         iNode = null;
                     } else {
                         iNode = iNode._parent;
-                        if (iNode === this._tree) {
+                        if (iNode === self._tree) {
                             iNode = null;
                         }
                     }
 
                     break;
                 case 36: // home
-                    iNode = this._tree.children && this._tree.children[0];
+                    iNode = self._tree.children && self._tree.children[0];
                     break;
                 case 35: // end
-                    index = this._tree.children && this._tree.children.length;
+                    index = self._tree.children && self._tree.children.length;
                     if (index) {
-                        iNode = this._tree.children[index -1];
+                        iNode = self._tree.children[index -1];
                     } else {
                         iNode = null;
                     }
                     break;
                 case 13: // enter
-                    fwNode = this._poolFetch(iNode);
-                    this.fire('enterkey', {
-                        domEvent:ev,
-                        node: fwNode
-                    });
-                    fwNode.fire('enterkey', {
-                        domEvent:ev,
-                        node: fwNode
-                    });
-                    this._poolReturn(fwNode);
+                    fireKey('enterkey');
                     iNode = null;
                     break;
                 case 32: // spacebar
-                    fwNode = this._poolFetch(iNode);
-                    this.fire('spacebar', {
-                        domEvent:ev,
-                        node: fwNode
-                    });
-                    fwNode.fire('spacebar', {
-                        domEvent:ev,
-                        node: fwNode
-                    });
-                    this._poolReturn(fwNode);
+                    fireKey('spacebar');
                     iNode = null;
                     break;
                 case 106: // asterisk on the numeric keypad
-                    this.expandAll();
+                    self.expandAll();
                     break;
                 default: // initial
                     iNode = null;
                     break;
             }
             if (iNode) {
-                this._focusOnINode(iNode);
+                self._focusOnINode(iNode);
                 ev.halt();
                 return false;
             }
@@ -391,7 +386,7 @@ Y.FWTreeView = FWTV;/**
 				this.toggle();
 			} else if (target.hasClass(CNAMES.cname_selection)) {
 				this.toggleSelection();
-			} else if (target.hasClass(CNAMES.cname_content) || target.hasClass(CNAMES.cname_icon)) {
+			} else if (target.hasClass(CNAMES.cname_label) || target.hasClass(CNAMES.cname_icon)) {
 				if (this.get('root').get('toggleOnLabelClick')) {
 					this.toggle();
 				}
@@ -406,6 +401,17 @@ Y.FWTreeView = FWTV;/**
 			this.set(SELECTED, (this.get(SELECTED)?NOT_SELECTED:FULLY_SELECTED));
 		},
 		/**
+		 * Responds to the change in the {{#crossLink "label:attribute"}}{{/crossLink}} attribute.
+		 * @method _afterLabelChange
+		 * @param ev {EventFacade} standard attribute change event facade
+		 * @private
+		 */
+        _afterLabelChange: function (ev) {
+            var el = Y.one('#' + this._iNode.id + ' .' + CNAMES.cname_label);
+            if (el) {
+                el.setHTML(ev.newVal);
+            }
+        },		/**
 		 * Changes the UI to reflect the selected state and propagates the selection up and/or down.
 		 * @method _afterSelectedChange
 		 * @param ev {EventFacade} out of which
@@ -420,8 +426,10 @@ Y.FWTreeView = FWTV;/**
 
 			if (!this.isRoot()) {
 				el = Y.one('#' + this.get('id'));
-                el.replaceClass(prefix + ev.prevVal, prefix + selected);
-                el.set('aria-checked', this._ariaCheckedGetter());
+                if (el) {
+                    el.replaceClass(prefix + ev.prevVal, prefix + selected);
+                    el.set('aria-checked', this._ariaCheckedGetter());
+                }
 				if (this.get('propagateUp') && ev.src !== 'propagatingDown') {
 					this.getParent()._childSelectedChange().release();
 				}
@@ -431,7 +439,7 @@ Y.FWTreeView = FWTV;/**
 					node.set(SELECTED , selected, 'propagatingDown');
 				});
 			}
-		},
+        },
         /**
          * Getter for the {{#crossLink "_aria_checked:attribute"}}{{/crossLink}}.
          * Translate the internal {{#crossLink "selected:attribute"}}{{/crossLink}}
@@ -442,6 +450,16 @@ Y.FWTreeView = FWTV;/**
          */
         _ariaCheckedGetter: function () {
             return ['false','mixed','true'][this.get(SELECTED)];
+        },
+        /**
+         * Setter for the {{ćrossLink "selected:attribute}}{{/crossLink}}.
+         * Translates a truish or falsy value into FULLY_SELECTED or NOT_SELECTED.
+         * @method _selectedSetter
+         * @param value
+         * @private
+         */
+        _selectedSetter: function (value) {
+            return (value?FULLY_SELECTED:NOT_SELECTED);
         },
 		/**
 		 * Overrides the original in FlyweightTreeNode so as to propagate the selected state
@@ -467,12 +485,23 @@ Y.FWTreeView = FWTV;/**
 		 * @private
 		 */
 		_childSelectedChange: function () {
-			var count = 0, selCount = 0;
+			var count = 0, selCount = 0, value;
 			this.forSomeChildren(function (node) {
 				count +=2;
 				selCount += node.get(SELECTED);
 			});
-			this.set(SELECTED, (selCount === 0?NOT_SELECTED:(selCount === count?FULLY_SELECTED:PARTIALLY_SELECTED)), {src:'propagatingUp'});
+            // While this is not solved:  http://yuilibrary.com/projects/yui3/ticket/2532810
+            // This is the good line:
+			//this.set(SELECTED, (selCount === 0?NOT_SELECTED:(selCount === count?FULLY_SELECTED:PARTIALLY_SELECTED)), {src:'propagatingUp'});
+            // This is the patch:
+            value = (selCount === 0?NOT_SELECTED:(selCount === count?FULLY_SELECTED:PARTIALLY_SELECTED));
+            this._afterSelectedChange({
+                prevVal: this._iNode.selected,
+                newVal: value,
+                src: 'propagatingUp'
+            });
+            this._iNode.selected = value;
+            // end of the patch
 			return this;
 		}
 
@@ -536,23 +565,28 @@ Y.FWTreeView = FWTV;/**
              * The module is provided with a default CSS style that makes node selection visible.
              * To enable it, add the `yui3-fw-treeview-checkbox` className to the container of the tree.
              *
-			 * `selected` can be
+			 * `selected` can return
 			 *
 			 * - Y.FWTreeNode.NOT_SELECTED (0) not selected
 			 * - Y.FWTreeNode.PARTIALLY_SELECTED (1) partially selected: some children are selected, some not or partially selected.
 			 * - Y.FWTreeNode.FULLY_SELECTED (2) fully selected.
+             *
+             * `selected`can be set to:
+             * - any true value:  will produce a FULLY_SELECTED state.
+             * - any false value: will produce a NOT_SELECTED state.
 			 *
 			 * The partially selected state can only be the result of selection propagating up from a child node.
-			 * The attribute might return PARTIALLY_SELECTED but the developer should never set that value.
+			 * Since PARTIALLY_SELECTED cannot be set, leaving just two possible values for setting,
+             * any true or false value will be valid when setting.  However, no matter what values were
+             * used when setting, one of the three possible values above will be returned.
+             *
 			 * @attribute selected
 			 * @type Integer
 			 * @value NOT_SELECTED
 			 */
 			selected: {
 				value:NOT_SELECTED,
-				validator:function (value) {
-					return value === NOT_SELECTED || value === FULLY_SELECTED || value === PARTIALLY_SELECTED;
-				}
+                setter: '_selectedSetter'
 			},
             /**
              * String value equivalent to the {{#crossLink "selected:attribute"}}{{/crossLink}}

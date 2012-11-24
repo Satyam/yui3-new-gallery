@@ -11,7 +11,6 @@ var Lang = Y.Lang,
 		cname_toggle: cName('toggle'),
 		cname_icon: cName('icon'),
 		cname_selection: cName('selection'),
-		// cname_content: cName('content'),
 		cname_sel_prefix: cName('selected-state'),
         cname_label: cName('label')
 	},

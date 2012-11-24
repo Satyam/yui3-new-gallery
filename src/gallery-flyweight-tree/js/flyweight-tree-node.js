@@ -43,6 +43,8 @@ FWNode = Y.Base.create(
          */
         initializer: function (cfg) {
             this._root = cfg.root;
+            this.after('expandedChange', this._afterExpandedChange);
+            this.after('labelChange', this._afterLabelChange);
         },
 		/**
 		 * Returns a string with the markup for this node along that of its children
@@ -154,6 +156,18 @@ FWNode = Y.Base.create(
 			}
 		},
 		/**
+		 * Responds to the change in the {{#crossLink "label:attribute"}}{{/crossLink}} attribute.
+		 * @method _afterLabelChange
+		 * @param ev {EventFacade} standard attribute change event facade
+		 * @private
+		 */
+        _afterLabelChange: function (ev) {
+            var el = Y.one('#' + this._iNode.id + ' .' + CNAME_CONTENT);
+            if (el) {
+                el.setHTML(ev.newVal);
+            }
+        },
+		/**
 		 * Getter for the expanded configuration attribute.
 		 * It is meant to be overriden by the developer.
 		 * The supplied version defaults to true if the expanded property
@@ -167,22 +181,23 @@ FWNode = Y.Base.create(
 			return this._iNode.expanded !== false;
 		},
 		/**
-		 * Setter for the expanded configuration attribute.
+		 * Responds to the change in the {{#crossLink "expanded:attribute"}}{{/crossLink}} attribute.
 		 * It renders the child nodes if this branch has never been expanded.
 		 * Then sets the className on the node to the static constants
 		 * CNAME_COLLAPSED or CNAME_EXPANDED from Y.FlyweightTreeManager
-		 * @method _expandedSetter
-		 * @param value {Boolean} new value for the expanded attribute
+		 * @method _afterExpandedChange
+		 * @param ev {EventFacade} standard attribute change event facade
 		 * @private
 		 */
-		_expandedSetter: function (value) {
-			var self = this,
+		_afterExpandedChange: function (ev) {
+			var value = !!ev.newVal,
+                self = this,
 				iNode = self._iNode,
 				root = self._root,
 				el = Y.one('#' + iNode.id),
 				dynLoader = root.get(DYNAMIC_LOADER);
 
-			iNode.expanded = value = !!value;
+			iNode.expanded = value;
 			if (dynLoader && !iNode.isLeaf && (!iNode.children  || !iNode.children.length)) {
 				this._loadDynamic();
 				return;
@@ -239,17 +254,20 @@ FWNode = Y.Base.create(
 		 * Renders the children of this node.
 		 * It the children had been rendered, they will be replaced.
 		 * @method _renderChildren
+         * @param el {Node} Container to render the children into.
+         * Used only for rendering of the root when it will be the contentBox.
 		 * @private
 		 */
-		_renderChildren: function () {
+		_renderChildren: function (el) {
 			var s = '',
 				iNode = this._iNode,
-				depth = this.get('depth');
+                depth = this.get('depth');
 			iNode._childrenRendered = true;
 			this.forSomeChildren(function (fwNode, index, array) {
 				s += fwNode._getHTML(index, array.length, depth + 1);
 			});
-			Y.one('#' + iNode.id + ' .' + CNAME_CHILDREN).setContent(s);
+            el = el || Y.one('#' + iNode.id + ' .' + CNAME_CHILDREN);
+            el.setHTML(s);
 		},
 		/**
 		 * Prevents this instance from being returned to the pool and reused.
@@ -293,8 +311,8 @@ FWNode = Y.Base.create(
 		getNextSibling: function() {
 			var parent = this._iNode._parent,
 				siblings = (parent && parent.children) || [],
-				index = siblings.indexOf(this) + 1;
-			if (index === 0 || index > siblings.length) {
+				index = siblings.indexOf(this._iNode) + 1;
+			if (index === 0 || index >= siblings.length) {
 				return null;
 			}
 			return this._root._poolFetch(siblings[index]).hold();
@@ -309,7 +327,7 @@ FWNode = Y.Base.create(
 		getPreviousSibling: function() {
 			var parent = this._iNode._parent,
 				siblings = (parent && parent.children) || [],
-				index = siblings.indexOf(this) - 1;
+				index = siblings.indexOf(this._iNode) - 1;
 			if (index < 0) {
 				return null;
 			}
@@ -558,19 +576,21 @@ FWNode = Y.Base.create(
 			 * @default ''
 			 */
 			label: {
-				validator: Lang.isString,
+				setter:String,
 				value: ''
 			},
 			/**
 			 * Id to assign to the DOM element that contains this node.
-			 * If none was supplied, it will generate one
+             * Once rendered, it cannot be changed.
+			 * If none was supplied, it will generate one.
 			 * @attribute id
 			 * @type {Identifier}
 			 * @default guid()
-			 * @readOnly
 			 */
 			id: {
-				readOnly: true
+				validator: function () {
+                    return !this.get('rendered');
+                }
 			},
 			/**
 			 * Returns the depth of this node from the root.
@@ -599,9 +619,7 @@ FWNode = Y.Base.create(
 			 * @default true
 			 */
 			expanded: {
-				_bypassProxy: true,
-				getter: '_expandedGetter',
-				setter: '_expandedSetter'
+				getter: '_expandedGetter'
 			}
 		}
 	}

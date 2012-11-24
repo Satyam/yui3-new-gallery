@@ -48,7 +48,7 @@
 				this.toggle();
 			} else if (target.hasClass(CNAMES.cname_selection)) {
 				this.toggleSelection();
-			} else if (target.hasClass(CNAMES.cname_content) || target.hasClass(CNAMES.cname_icon)) {
+			} else if (target.hasClass(CNAMES.cname_label) || target.hasClass(CNAMES.cname_icon)) {
 				if (this.get('root').get('toggleOnLabelClick')) {
 					this.toggle();
 				}
@@ -63,6 +63,17 @@
 			this.set(SELECTED, (this.get(SELECTED)?NOT_SELECTED:FULLY_SELECTED));
 		},
 		/**
+		 * Responds to the change in the {{#crossLink "label:attribute"}}{{/crossLink}} attribute.
+		 * @method _afterLabelChange
+		 * @param ev {EventFacade} standard attribute change event facade
+		 * @private
+		 */
+        _afterLabelChange: function (ev) {
+            var el = Y.one('#' + this._iNode.id + ' .' + CNAMES.cname_label);
+            if (el) {
+                el.setHTML(ev.newVal);
+            }
+        },		/**
 		 * Changes the UI to reflect the selected state and propagates the selection up and/or down.
 		 * @method _afterSelectedChange
 		 * @param ev {EventFacade} out of which
@@ -77,8 +88,10 @@
 
 			if (!this.isRoot()) {
 				el = Y.one('#' + this.get('id'));
-                el.replaceClass(prefix + ev.prevVal, prefix + selected);
-                el.set('aria-checked', this._ariaCheckedGetter());
+                if (el) {
+                    el.replaceClass(prefix + ev.prevVal, prefix + selected);
+                    el.set('aria-checked', this._ariaCheckedGetter());
+                }
 				if (this.get('propagateUp') && ev.src !== 'propagatingDown') {
 					this.getParent()._childSelectedChange().release();
 				}
@@ -88,7 +101,7 @@
 					node.set(SELECTED , selected, 'propagatingDown');
 				});
 			}
-		},
+        },
         /**
          * Getter for the {{#crossLink "_aria_checked:attribute"}}{{/crossLink}}.
          * Translate the internal {{#crossLink "selected:attribute"}}{{/crossLink}}
@@ -134,12 +147,23 @@
 		 * @private
 		 */
 		_childSelectedChange: function () {
-			var count = 0, selCount = 0;
+			var count = 0, selCount = 0, value;
 			this.forSomeChildren(function (node) {
 				count +=2;
 				selCount += node.get(SELECTED);
 			});
-			this.set(SELECTED, (selCount === 0?NOT_SELECTED:(selCount === count?FULLY_SELECTED:PARTIALLY_SELECTED)), {src:'propagatingUp'});
+            // While this is not solved:  http://yuilibrary.com/projects/yui3/ticket/2532810
+            // This is the good line:
+			//this.set(SELECTED, (selCount === 0?NOT_SELECTED:(selCount === count?FULLY_SELECTED:PARTIALLY_SELECTED)), {src:'propagatingUp'});
+            // This is the patch:
+            value = (selCount === 0?NOT_SELECTED:(selCount === count?FULLY_SELECTED:PARTIALLY_SELECTED));
+            this._afterSelectedChange({
+                prevVal: this._iNode.selected,
+                newVal: value,
+                src: 'propagatingUp'
+            });
+            this._iNode.selected = value;
+            // end of the patch
 			return this;
 		}
 
@@ -215,7 +239,7 @@
 			 *
 			 * The partially selected state can only be the result of selection propagating up from a child node.
 			 * Since PARTIALLY_SELECTED cannot be set, leaving just two possible values for setting,
-             * any true or false value will be valid when setting.  However, no matter what values were 
+             * any true or false value will be valid when setting.  However, no matter what values were
              * used when setting, one of the three possible values above will be returned.
              *
 			 * @attribute selected
