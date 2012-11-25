@@ -1,4 +1,5 @@
-/** Creates a Treeview using the FlyweightTreeManager Widget to handle its nodes.
+/**
+ * TreeView widget.
  * It creates the tree based on an object passed as the `tree` attribute in the constructor.
  * @example
  *
@@ -21,14 +22,13 @@
 	]});
 	tv.render('#container');
 
- * @module gallery-fwt-treeview
- */
-/**
+ *
  * @class FWTreeView
  * @extends FlyweightTreeManager
  * @constructor
  * @param config {Object} Configuration attributes, amongst them:
- * @param config.tree {Array} Array of objects defining the first level of nodes.
+ * @param config.tree {Array} Array of strings or objects defining the first level of nodes.
+ * If a string, it will be used as the label, if an object, it may contain:
  * @param config.tree.label {String} Text of HTML markup to be shown in the node
  * @param [config.tree.expanded=true] {Boolean} Whether the children of this node should be visible.
  * @param [config.tree.children] {Array} Further definitions for the children of this node
@@ -269,16 +269,13 @@ FWTV = Y.Base.create(
 			 * Enables toggling by clicking on the label item instead of just the toggle icon.
 			 * @attribute toggleOnLabelClick
 			 * @type Boolean
-			 * @value false
+			 * @default false
 			 */
 			toggleOnLabelClick: {
 				value:false,
 				validator:Lang.isBoolean
 			}
-
-
 		}
-
 	}
 );
 
@@ -290,7 +287,7 @@ FWTV = Y.Base.create(
  * This instance is pooled and will be discarded upon return from the listener.
  * If you need to hold on to this instance,
  * use the {{#crossLink "TreeNode/hold"}}{{/crossLink}} method to preserve it.
- * @event -any-
+ * @event -any DOM event-
  * @param type {String} The full name of the event fired
  * @param ev {EventFacade} Standard YUI event facade for DOM events plus:
  * @param ev.node {TreeNode} TreeNode instance that received the event
@@ -300,14 +297,16 @@ FWTV = Y.Base.create(
  * Used internally to toggle node selection.
  * @event spacebar
  * @param ev {EventFacade} YUI event facade for keyboard events, including:
- * @param ev.domEvent {Object} The original event produced by the DOM
+ * @param ev.domEvent {Object} The original event produced by the DOM, except:
+ * @param ev.domEvent.target {Node} The DOM element that had the focus when the key was pressed
  * @param ev.node {FWTreeNode} The node that had the focus when the key was pressed
  */
 /**
  * Fires when the enter key is pressed.
  * @event enterkey
  * @param ev {EventFacade} YUI event facade for keyboard events, including:
- * @param ev.domEvent {Object} The original event produced by the DOM
+ * @param ev.domEvent {Object} The original event produced by the DOM, except:
+ * @param ev.domEvent.target {Node} The DOM element that had the focus when the key was pressed
  * @param ev.node {FWTreeNode} The node that had the focus when the key was pressed
  */
 Y.FWTreeView = FWTV;

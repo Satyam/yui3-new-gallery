@@ -328,6 +328,7 @@ YUI.add('treeview-tests', function(Y) {
             test(39, '2-0',18);
             expanded(true);
             test(39, '2-0-0',19);
+            test(39, '2-0-0',19); // right: shouldn't have moved
             test(40, '2-0-1',20);
             test(37, '2-0',21); // left
             expanded(true);
@@ -337,6 +338,7 @@ YUI.add('treeview-tests', function(Y) {
             expanded(true);
             test(37, '2',24); // left
             expanded(false);
+            test(37, '2',24); // left (shouldn't have moved)'
             test(36, '0',25); // home
             test(35, '2',26); //end
             test(38, '1-2-2',27); //up
@@ -352,6 +354,7 @@ YUI.add('treeview-tests', function(Y) {
             selected(1);
             test(38,'0-2-2',33);
             selected(0);
+
             tv.after('enterkey', function (ev) {
                 A.areEqual('label 0-2-2', ev.node.get(LABEL), 'Label on enter');
                 enterPressed = true;
@@ -359,6 +362,9 @@ YUI.add('treeview-tests', function(Y) {
             A.isFalse(enterPressed, 'before enter key');
             test(13,'0-2-2',34) //enter
             A.isTrue(enterPressed, 'after enter key');
+            test(65, '0-2-2',35);  // nothing special should happen with any other key
+
+
             tv.destroy();
         }
     }));

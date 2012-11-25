@@ -1,37 +1,39 @@
 YUI().use('gallery-fwt-treeview', function (Y) {
-    var buildTree = function (label, depth) {
-        depth = depth || 0;
-        if (depth > 5) {
-            return;
-        }
-        var i, branch = [], node, newLabel;
-        for (i = 0; i < Math.random() * 5 + 1; i += 1) {
-            newLabel = label + '-' + i;
-            node = {
-                label: newLabel,
-                expanded: Math.random() > 0.5,
-                selected: Math.random() > 0.8
-            }
-            if (Math.random() > 0.6) {
-                node.children = buildTree(newLabel, depth + 1);
-            }
-            branch.push(node);
 
-        }
-        return branch;
-    };
-
-
-
+    // This is the same tree as in the basic example
     var tv = new Y.FWTreeView({
-        tree: buildTree('label'),
-        toggleOnLabelClick:true
-    });
-
+        tree: [
+        {
+            label: 'label 0',
+            children: [
+                {
+                    label: 'label 0-0',
+                    expanded: false,
+                    children: [
+                        {
+                            label: 'label 0-0-0'
+                        },
+                        {
+                            label: 'label 0-0-1',
+                            children: [
+                                {label: 'label 0-0-1'}
+                            ]
+                        }
+                    ]
+                },
+                {
+                    label: 'label 0-1'
+                }
+            ]
+        },
+        {
+            label: 'label 1'
+        }
+    ]});
     tv.render('#container');
 
-
-    Y.one('#show').on('click', function() {
+    // the code to read and show the results of selected nodes.
+    Y.one('#show').on('click', function () {
 
         var output = ['<tr><th>Label</th><th>Selected</th></tr>'];
 
@@ -45,7 +47,26 @@ YUI().use('gallery-fwt-treeview', function (Y) {
         });
 
         Y.one('#log').setHTML('<table>' + output.join('\n') + '</table>');
+    });
 
+    // Sets the propagateUp attribute on all nodes
+    Y.one('#up').on('click', function (ev) {
+
+        var value = ev.target.get('checked');
+
+        tv.forSomeNodes(function(node) {
+            node.set('propagateUp', value);
+        });
+    });
+
+    // Sets the propagateDown attribute on all nodes
+    Y.one('#down').on('click', function (ev) {
+
+        var value = ev.target.get('checked');
+
+        tv.forSomeNodes(function(node) {
+            node.set('propagateDown', value);
+        });
     });
 
 });

@@ -1,7 +1,4 @@
 /**
- *  @module gallery-fwt-treeview
- */
-/**
  *  This class must not be generated directly.
  *  Instances of it will be provided by FWTreeView as required.
  *
@@ -229,22 +226,23 @@
              *
 			 * `selected` can return
 			 *
-			 * - Y.FWTreeNode.NOT_SELECTED (0) not selected
-			 * - Y.FWTreeNode.PARTIALLY_SELECTED (1) partially selected: some children are selected, some not or partially selected.
-			 * - Y.FWTreeNode.FULLY_SELECTED (2) fully selected.
+			 * - Y.FWTreeNode.NOT\_SELECTED (0) not selected
+			 * - Y.FWTreeNode.PARTIALLY\_SELECTED (1) partially selected: some children are selected, some not or partially selected.
+			 * - Y.FWTreeNode.FULLY\_SELECTED (2) fully selected.
              *
              * `selected`can be set to:
-             * - any true value:  will produce a FULLY_SELECTED state.
-             * - any false value: will produce a NOT_SELECTED state.
+             *
+             * - any true value:  will produce a FULLY\_SELECTED state.
+             * - any false value: will produce a NOT\_SELECTED state.
 			 *
 			 * The partially selected state can only be the result of selection propagating up from a child node.
-			 * Since PARTIALLY_SELECTED cannot be set, leaving just two possible values for setting,
+			 * Since PARTIALLY\_SELECTED cannot be set, leaving just two possible values for setting,
              * any true or false value will be valid when setting.  However, no matter what values were
              * used when setting, one of the three possible values above will be returned.
              *
 			 * @attribute selected
 			 * @type Integer
-			 * @value NOT_SELECTED
+			 * @default NOT_SELECTED
 			 */
 			selected: {
 				value:NOT_SELECTED,
@@ -268,7 +266,7 @@
              * See {{#crossLink "selected:attribute"}}{{/crossLink}}.
 			 * @attribute propagateUp
 			 * @type Boolean
-			 * @value true
+			 * @default true
 			 */
 			propagateUp: {
 				value: true,
@@ -279,7 +277,7 @@
              * See {{#crossLink "selected:attribute"}}{{/crossLink}}.
              * @attribute propagateDown
 			 * @type Boolean
-			 * @value true
+			 * @default true
 			 */
 			propagateDown: {
 				value: true,
@@ -294,14 +292,16 @@
  * Used internally to toggle node selection.
  * @event spacebar
  * @param ev {EventFacade} YUI event facade for keyboard events, including:
- * @param ev.domEvent {Object} The original event produced by the DOM
+ * @param ev.domEvent {Object} The original event produced by the DOM, except:
+ * @param ev.domEvent.target {Node} The DOM element that had the focus when the key was pressed
  * @param ev.node {FWTreeNode} The node that had the focus when the key was pressed
  */
 /**
  * Fires when the enter key is pressed.
  * @event enterkey
  * @param ev {EventFacade} YUI event facade for keyboard events, including:
- * @param ev.domEvent {Object} The original event produced by the DOM
+ * @param ev.domEvent {Object} The original event produced by the DOM, except:
+ * @param ev.domEvent.target {Node} The DOM element that had the focus when the key was pressed
  * @param ev.node {FWTreeNode} The node that had the focus when the key was pressed
  */
 /**
