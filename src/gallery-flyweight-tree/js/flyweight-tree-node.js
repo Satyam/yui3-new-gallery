@@ -46,6 +46,12 @@ FWNode = Y.Base.create(
             this.after('expandedChange', this._afterExpandedChange);
             this.after('labelChange', this._afterLabelChange);
         },
+        /**
+         * Patch to work around the issue with the static _buildCfg property of Base
+         * that doesn't quite work.
+         * @method _buildCfgPatch
+         * @private
+         */
         _buildCfgPatch: function () {
             var t = null, constr = this.constructor;
             if (!constr._buildConfigPatched) {
@@ -121,6 +127,7 @@ FWNode = Y.Base.create(
 			if (index === nSiblings - 1) {
 				nodeClasses.push(CNAMES.CNAME_LASTCHILD);
 			}
+            nodeClasses.push(CNAMES.CNAME_TYPE_PREFIX + (iNode.type || 'default'));
 			attrs.children = s;
 			attrs.CNAME_NODE = nodeClasses.join(' ');
             attrs.tabIndex = (iNode === root._focusedINode)?0:-1;
@@ -531,7 +538,8 @@ FWNode = Y.Base.create(
             CNAME_NOCHILDREN: cName('no-children'),
             CNAME_FIRSTCHILD: cName('first-child'),
             CNAME_LASTCHILD: cName('last-child'),
-            CNAME_LOADING: cName('loading')
+            CNAME_LOADING: cName('loading'),
+            CNAME_TYPE_PREFIX: cName('type-')
 /*        },
         _buildCfg: {
             // aggregates: ['CNAMES']
