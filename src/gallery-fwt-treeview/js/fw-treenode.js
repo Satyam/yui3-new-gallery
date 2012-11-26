@@ -23,7 +23,7 @@
                 this.after(EXPANDED + CHANGE, this._afterExpandedChanged)
             );
             // This is a patch because the _buildCfg does not work
-            Y.mix(this.constructor.CNAMES, this.constructor.superclass.constructor.CNAMES);
+            this._buildCfgPatch();
 		},
         /**
          * Listens to changes in the expanded attribute to invalidate and force
@@ -170,16 +170,23 @@
 	},
 	{
 		/**
-		 * Template to produce the markup for a node in the tree.
-		 * @property TEMPLATE
+		 * Outer template to produce the markup for a node in the tree.
+		 * @property OUTER_TEMPLATE
 		 * @type String
 		 * @static
 		 */
-		TEMPLATE: '<li id="{id}" class="{CNAME_NODE} {CNAME_SEL_PREFIX}-{selected}" ' +
+		OUTER_TEMPLATE: '<li id="{id}" class="{CNAME_NODE} {CNAME_SEL_PREFIX}-{selected}" ' +
                 'role="treeitem" aria-expanded="{expanded}" aria-checked="{_aria_checked}">' +
-            '<div tabIndex="{tabIndex}" class="{CNAME_CONTENT}"><div class="{CNAME_TOGGLE}"></div>' +
-            '<div class="{CNAME_ICON}"></div><div class="{CNAME_SELECTION}"></div><div class="{CNAME_LABEL}">{label}</div></div>' +
+            '{INNER_TEMPLATE}' +
             '<ul class="{CNAME_CHILDREN}" role="group">{children}</ul></li>',
+		/**
+		 * Template to produce the markup for a node in the tree.
+		 * @property INNER_TEMPLATE
+		 * @type String
+		 * @static
+		 */
+		INNER_TEMPLATE: '<div tabIndex="{tabIndex}" class="{CNAME_CONTENT}"><div class="{CNAME_TOGGLE}"></div>' +
+            '<div class="{CNAME_ICON}"></div><div class="{CNAME_SELECTION}"></div><div class="{CNAME_LABEL}">{label}</div></div>',
         /**
          * Collection of classNames to set in the template.
          * @property CNAMES
