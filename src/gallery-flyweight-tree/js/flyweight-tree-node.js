@@ -69,7 +69,8 @@ FWNode = Y.Base.create(
 				s = '',
 				templ = iNode.template,
 				childCount = iNode.children && iNode.children.length,
-				nodeClasses = [CNAME_NODE],
+                CNAMES = this.constructor.CNAMES,
+				nodeClasses = [CNAMES.CNAME_NODE],
 				superConstructor = this.constructor;
 
 			while (!templ) {
@@ -77,7 +78,7 @@ FWNode = Y.Base.create(
 				superConstructor = superConstructor.superclass.constructor;
 
 			}
-
+            Y.mix(attrs, CNAMES);
 			iNode._rendered = true;
 			if (childCount) {
 				if (attrs.expanded) {
@@ -85,27 +86,25 @@ FWNode = Y.Base.create(
 					this.forSomeChildren( function (fwNode, index, array) {
 						s += fwNode._getHTML(index, array.length, depth + 1);
 					});
-					nodeClasses.push(CNAME_EXPANDED);
+					nodeClasses.push(CNAMES.CNAME_EXPANDED);
 				} else {
-					nodeClasses.push(CNAME_COLLAPSED);
+					nodeClasses.push(CNAMES.CNAME_COLLAPSED);
 				}
 			} else {
 				if (this._root.get(DYNAMIC_LOADER) && !iNode.isLeaf) {
-					nodeClasses.push(CNAME_COLLAPSED);
+					nodeClasses.push(CNAMES.CNAME_COLLAPSED);
 				} else {
-					nodeClasses.push(CNAME_NOCHILDREN);
+					nodeClasses.push(CNAMES.CNAME_NOCHILDREN);
 				}
 			}
 			if (index === 0) {
-				nodeClasses.push(CNAME_FIRSTCHILD);
+				nodeClasses.push(CNAMES.CNAME_FIRSTCHILD);
 			}
 			if (index === nSiblings - 1) {
-				nodeClasses.push(CNAME_LASTCHILD);
+				nodeClasses.push(CNAMES.CNAME_LASTCHILD);
 			}
 			attrs.children = s;
-			attrs.cname_node = nodeClasses.join(' ');
-			attrs.cname_content = CNAME_CONTENT;
-			attrs.cname_children = CNAME_CHILDREN;
+			attrs.CNAME_NODE = nodeClasses.join(' ');
             attrs.tabIndex = (iNode === root._focusedINode)?0:-1;
 
 			return Lang.sub(templ, attrs);
@@ -162,7 +161,7 @@ FWNode = Y.Base.create(
 		 * @private
 		 */
         _afterLabelChange: function (ev) {
-            var el = Y.one('#' + this._iNode.id + ' .' + CNAME_CONTENT);
+            var el = Y.one('#' + this._iNode.id + ' .' + FWNode.CNAMES.CNAME_CONTENT);
             if (el) {
                 el.setHTML(ev.newVal);
             }
@@ -184,7 +183,7 @@ FWNode = Y.Base.create(
 		 * Responds to the change in the {{#crossLink "expanded:attribute"}}{{/crossLink}} attribute.
 		 * It renders the child nodes if this branch has never been expanded.
 		 * Then sets the className on the node to the static constants
-		 * CNAME_COLLAPSED or CNAME_EXPANDED from Y.FlyweightTreeManager
+		 * CNAME\_COLLAPSED or CNAME\_EXPANDED from Y.FlyweightTreeManager
 		 * @method _afterExpandedChange
 		 * @param ev {EventFacade} standard attribute change event facade
 		 * @private
@@ -195,7 +194,9 @@ FWNode = Y.Base.create(
 				iNode = self._iNode,
 				root = self._root,
 				el = Y.one('#' + iNode.id),
-				dynLoader = root.get(DYNAMIC_LOADER);
+				dynLoader = root.get(DYNAMIC_LOADER),
+                CEXP = FWNode.CNAMES.CNAME_EXPANDED,
+                CCOLL = FWNode.CNAMES.CNAME_COLLAPSED;
 
 			iNode.expanded = value;
 			if (dynLoader && !iNode.isLeaf && (!iNode.children  || !iNode.children.length)) {
@@ -208,9 +209,9 @@ FWNode = Y.Base.create(
                         if (!iNode._childrenRendered) {
                             self._renderChildren();
                         }
-                        el.replaceClass(CNAME_COLLAPSED, CNAME_EXPANDED);
+                        el.replaceClass(CCOLL, CEXP);
                     } else {
-                        el.replaceClass(CNAME_EXPANDED, CNAME_COLLAPSED);
+                        el.replaceClass(CEXP, CCOLL);
                     }
                 }
                 el.set('aria-expanded', String(value));
@@ -224,7 +225,7 @@ FWNode = Y.Base.create(
 		_loadDynamic: function () {
 			var self = this,
 				root = self._root;
-			Y.one('#' + this.get('id')).replaceClass(CNAME_COLLAPSED, CNAME_LOADING);
+			Y.one('#' + this.get('id')).replaceClass(FWNode.CNAMES.CNAME_COLLAPSED, FWNode.CNAMES.CNAME_LOADING);
 			root.get(DYNAMIC_LOADER).call(root, self, Y.bind(self._dynamicLoadReturn, self));
 
 		},
@@ -237,7 +238,8 @@ FWNode = Y.Base.create(
 		_dynamicLoadReturn: function (response) {
 			var self = this,
 				iNode = self._iNode,
-				root = self._root;
+				root = self._root,
+                CNAMES = FWNode.CNAMES;
 
 			if (response) {
 
@@ -248,7 +250,7 @@ FWNode = Y.Base.create(
 				iNode.isLeaf = true;
 			}
 			// isLeaf might have been set in the response, not just in the line above.
-			Y.one('#' + iNode.id).replaceClass(CNAME_LOADING, (iNode.isLeaf?CNAME_NOCHILDREN:CNAME_EXPANDED));
+			Y.one('#' + iNode.id).replaceClass(CNAMES.CNAME_LOADING, (iNode.isLeaf?CNAMES.CNAME_NOCHILDREN:CNAMES.CNAME_EXPANDED));
 		},
 		/**
 		 * Renders the children of this node.
@@ -266,7 +268,7 @@ FWNode = Y.Base.create(
 			this.forSomeChildren(function (fwNode, index, array) {
 				s += fwNode._getHTML(index, array.length, depth + 1);
 			});
-            el = el || Y.one('#' + iNode.id + ' .' + CNAME_CHILDREN);
+            el = el || Y.one('#' + iNode.id + ' .' + FWNode.CNAMES.CNAME_CHILDREN);
             el.setHTML(s);
 		},
 		/**
@@ -431,24 +433,24 @@ FWNode = Y.Base.create(
          * It must contain at least three elements identified by their classNames:
 
          +----------------------------+
-         | {cname_node}               |
+         | {CNAME_NODE}               |
          | +------------------------+ |
-         | | {cname_content}        | |
+         | | {CNAME_CONTENT}        | |
          | +------------------------+ |
          |                            |
          | +------------------------+ |
-         | | {cname_children}       | |
+         | | {CNAME_CHILDREN}       | |
          | +------------------------+ |
          +----------------------------+
 
          * For example:
 
-         '<div id="{id}" class="{cname_node}" role="" aria-expanded="{expanded}">' +
-               '<div tabIndex="{tabIndex}" class="{cname_content}">{label}</div>' +
-               '<div class="{cname_children}" role="group">{children}</div>' +
+         '<div id="{id}" class="{CNAME_NODE}" role="" aria-expanded="{expanded}">' +
+               '<div tabIndex="{tabIndex}" class="{CNAME_CONTENT}">{label}</div>' +
+               '<div class="{CNAME_CHILDREN}" role="group">{children}</div>' +
          '</div>'
 
-         * The outermost container identified by the className `{cname_node}`
+         * The outermost container identified by the className `{CNAME_NODE}`
          * must also use the `{id}` placeholder to set the `id` of the node.
          * It should also have the proper ARIA role assigned and the
          * `aria-expanded` set to the `{expanded}` placeholder.
@@ -456,7 +458,7 @@ FWNode = Y.Base.create(
          * It must contain two further elements:
          *
          * * A container for the contents of this node, identified by the className
-         *   `{cname_content}` which should contain everything the user would associate
+         *   `{CNAME_CONTENT}` which should contain everything the user would associate
          *   with this node, such as the label and other status indicators
          *   such as toggle and selection indicators.
          *   This is the element that would receive the focus of the node, thus,
@@ -464,82 +466,42 @@ FWNode = Y.Base.create(
          *   value for the `tabIndex` attribute.
          *
          * * The other element is the container for the children of this node.
-         *   It will be identified by the className `{cname_children}` and it
+         *   It will be identified by the className `{CNAME_CHILDREN}` and it
          *   should enclose the placeholder `{children}`.
          *
 		 * @property TEMPLATE
 		 * @type {String}
-		 * @default '<div id="{id}" class="{cname_node}" role="" aria-expanded="{expanded}"><div tabIndex="{tabIndex}"
-         class="{cname_content}">{label}</div><div class="{cname_children}" role="group">{children}</div></div>'
+		 * @default '<div id="{id}" class="{CNAME_NODE}" role="" aria-expanded="{expanded}"><div tabIndex="{tabIndex}"
+         class="{CNAME_CONTENT}">{label}</div><div class="{CNAME_CHILDREN}" role="group">{children}</div></div>'
 		 * @static
 		 */
-		TEMPLATE: '<div id="{id}" class="{cname_node}" role="" aria-expanded="{expanded}">' +
-                        '<div tabIndex="{tabIndex}" class="{cname_content}">{label}</div>' +
-                        '<div class="{cname_children}" role="group">{children}</div>' +
+		TEMPLATE: '<div id="{id}" class="{CNAME_NODE}" role="" aria-expanded="{expanded}">' +
+                        '<div tabIndex="{tabIndex}" class="{CNAME_CONTENT}">{label}</div>' +
+                        '<div class="{CNAME_CHILDREN}" role="group">{children}</div>' +
                    '</div>',
-		/**
-		 * CCS className constant to use as the class name for the DOM element representing the node.
-		 * @property CNAME_NODE
-		 * @type String
-		 * @static
-		 */
-		CNAME_NODE: CNAME_NODE,
-		/**
-		 * CCS className constant to use as the class name for the DOM element that will contain the label and/or status of this node.
-		 * @property CNAME_CONTENT
-		 * @type String
-		 * @static
-		 */
-		CNAME_CONTENT: CNAME_CONTENT,
-		/**
-		 * CCS className constant to use as the class name for the DOM element that will contain the children of this node.
-		 * @property CNAME_CHILDREN
-		 * @type String
-		 * @static
-		 */
-		CNAME_CHILDREN: CNAME_CHILDREN,
-		/**
-		 * CCS className constant added to the DOM element for this node when its state is not expanded.
-		 * @property CNAME_COLLAPSED
-		 * @type String
-		 * @static
-		 */
-		CNAME_COLLAPSED: CNAME_COLLAPSED,
-		/**
-		 * CCS className constant added to the DOM element for this node when its state is expanded.
-		 * @property CNAME_EXPANDED
-		 * @type String
-		 * @static
-		 */
-		CNAME_EXPANDED: CNAME_EXPANDED,
-		/**
-		 * CCS className constant added to the DOM element for this node when it has no children.
-		 * @property CNAME_NOCHILDREN
-		 * @type String
-		 * @static
-		 */
-		CNAME_NOCHILDREN: CNAME_NOCHILDREN,
-		/**
-		 * CCS className constant added to the DOM element for this node when it is the first in the group.
-		 * @property CNAME_FIRSTCHILD
-		 * @type String
-		 * @static
-		 */
-		CNAME_FIRSTCHILD: CNAME_FIRSTCHILD,
-		/**
-		 * CCS className constant added to the DOM element for this node when it is the last in the group.
-		 * @property CNAME_LASTCHILD
-		 * @type String
-		 * @static
-		 */
-		CNAME_LASTCHILD: CNAME_LASTCHILD,
-		/**
-		 * CCS className constant added to the DOM element for this node when dynamically loading its children.
-		 * @property CNAME_LOADING
-		 * @type String
-		 * @static
-		 */
-		CNAME_LOADING: CNAME_LOADING,
+        /**
+         * Collection of CSS class names used in the template.
+         * It is written all uppercase because its contents are meant to be constants,
+         * this object itself being augmented by class names added by its subclasses
+         * @attribute CNAMES
+         * @type Object
+         * @static
+         */
+        CNAMES: {
+            CNAME_NODE: getCName(FWNODE_NAME),
+            CNAME_CONTENT: cName('content'),
+            CNAME_CHILDREN: cName('children'),
+            CNAME_COLLAPSED: cName('collapsed'),
+            CNAME_EXPANDED: cName(EXPANDED),
+            CNAME_NOCHILDREN: cName('no-children'),
+            CNAME_FIRSTCHILD: cName('first-child'),
+            CNAME_LASTCHILD: cName('last-child'),
+            CNAME_LOADING: cName('loading')
+/*        },
+        _buildCfg: {
+            // aggregates: ['CNAMES']
+
+ */       },
 		ATTRS: {
 			/**
 			 * Reference to the FlyweightTreeManager this node belongs to

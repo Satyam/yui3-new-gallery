@@ -1,7 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- YUI 3 Gallery Component Build File -->
-<project name="Flyweight Tree " default="local">
-    <description>Flyweight Tree  Build File</description>
-    <property file="build.properties" />
-    <import file="${builddir}/3.x/bootstrap.xml" description="Default Build Properties and Targets" />
+<project name="test" default="build" basedir="./">
+	<target name="build">
+		<apply executable="yogi">
+            <fileset dir="./" includes="build.json"/>
+            <arg value="build"/>
+
+		</apply>
+	</target>
+	<target name="test">
+		<apply executable="yogi">
+			<arg value="test"/>
+			<arg value="--istanbul"/>
+            <fileset dir="./" includes="build.json"/>
+		</apply>
+	</target>
 </project>

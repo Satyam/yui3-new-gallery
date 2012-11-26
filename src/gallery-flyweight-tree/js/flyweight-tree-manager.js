@@ -402,7 +402,7 @@ FWMgr = Y.Base.create(
          * @protected
          */
         _findINodeByElement: function(el) {
-            var id = el.ancestor(DOT + FWNode.CNAME_NODE, true).get('id'),
+            var id = el.ancestor(DOT + FWNode.CNAMES.CNAME_NODE, true).get('id'),
                 found = null,
                 scan = function (iNode) {
                     if (iNode.id === id) {
@@ -529,13 +529,13 @@ FWMgr = Y.Base.create(
 
             if (iNode && iNode !== prevINode) {
 
-                el = Y.one('#' + prevINode.id + ' .' + CNAME_CONTENT);
+                el = Y.one('#' + prevINode.id + ' .' + FWNode.CNAMES.CNAME_CONTENT);
                 el.blur();
                 el.set(TABINDEX, -1);
 
                 expand(iNode);
 
-                el = Y.one('#' + iNode.id + ' .' + CNAME_CONTENT);
+                el = Y.one('#' + iNode.id + ' .' + FWNode.CNAMES.CNAME_CONTENT);
                 el.focus();
                 el.set(TABINDEX,0);
 
