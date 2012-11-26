@@ -46,6 +46,27 @@ FWNode = Y.Base.create(
             this.after('expandedChange', this._afterExpandedChange);
             this.after('labelChange', this._afterLabelChange);
         },
+        _buildCfgPatch: function () {
+            var t = null, constr = this.constructor;
+            if (!constr._buildConfigPatched) {
+                constr._buildConfigPatched = true;
+                Y.mix(constr.CNAMES, constr.superclass.constructor.CNAMES);
+                while (!t) {
+                    t = constr.OUTER_TEMPLATE;
+                    constr = constr.superclass.constructor;
+                }
+                constr = this.constructor;
+                constr.OUTER_TEMPLATE = t;
+                t = null;
+                while (!t) {
+                    t = constr.INNER_TEMPLATE;
+                    constr = constr.superclass.constructor;
+                }
+                constr = this.constructor;
+                constr.INNER_TEMPLATE = t;
+            }
+
+        },
 		/**
 		 * Returns a string with the markup for this node along that of its children
 		 * produced from its attributes rendered
@@ -67,17 +88,14 @@ FWNode = Y.Base.create(
                 iNode = this._iNode,
 				attrs = this.getAttrs(),
 				s = '',
-				templ = iNode.template,
 				childCount = iNode.children && iNode.children.length,
                 CNAMES = this.constructor.CNAMES,
 				nodeClasses = [CNAMES.CNAME_NODE],
-				superConstructor = this.constructor;
+				templ,
+                it = iNode.inner_template || this.constructor.INNER_TEMPLATE,
+                ot = iNode.outer_template || this.constructor.OUTER_TEMPLATE;
 
-			while (!templ) {
-				templ = superConstructor.TEMPLATE;
-				superConstructor = superConstructor.superclass.constructor;
-
-			}
+            templ = ot.replace('{INNER_TEMPLATE}', it);
             Y.mix(attrs, CNAMES);
 			iNode._rendered = true;
 			if (childCount) {
@@ -423,19 +441,20 @@ FWNode = Y.Base.create(
 	},
 	{
 		/**
-		 * Template string to be used to render this node.
-		 * It should be overriden by the subclass.
+		 * Outer template string to be used to render this node.
+		 * It may be overriden by the subclass.
 		 *
-		 * It contains the HTML markup for this node plus placeholders,
+		 * It contains the HTML markup for the wrapper for the node plus placeholders,
 		 * enclosed in curly braces, that have access to any of the
 		 * configuration attributes of this node plus several predefined placeholders.
          *
-         * It must contain at least three elements identified by their classNames:
+         * It must contain at least three elements identified by their CSS classNames
+         * and a special placeholder:
 
          +----------------------------+
          | {CNAME_NODE}               |
          | +------------------------+ |
-         | | {CNAME_CONTENT}        | |
+         | | {INNER_TEMPLATE}        | |
          | +------------------------+ |
          |                            |
          | +------------------------+ |
@@ -445,10 +464,8 @@ FWNode = Y.Base.create(
 
          * For example:
 
-         '<div id="{id}" class="{CNAME_NODE}" role="" aria-expanded="{expanded}">' +
-               '<div tabIndex="{tabIndex}" class="{CNAME_CONTENT}">{label}</div>' +
-               '<div class="{CNAME_CHILDREN}" role="group">{children}</div>' +
-         '</div>'
+        OUTER_TEMPLATE:'<div id="{id}" class="{CNAME_NODE}" role="" aria-expanded="{expanded}">{INNER_TEMPLATE}' +
+                            '<div class="{CNAME_CHILDREN}" role="group">{children}</div></div>',
 
          * The outermost container identified by the className `{CNAME_NODE}`
          * must also use the `{id}` placeholder to set the `id` of the node.
@@ -457,28 +474,46 @@ FWNode = Y.Base.create(
          *
          * It must contain two further elements:
          *
-         * * A container for the contents of this node, identified by the className
-         *   `{CNAME_CONTENT}` which should contain everything the user would associate
+         * * A placeholder for the INNER_TEMPLATE of this node, identified by the placeholder
+         *   `{INNER_TEMPLATE}` which should contain everything the user would associate
          *   with this node, such as the label and other status indicators
          *   such as toggle and selection indicators.
-         *   This is the element that would receive the focus of the node, thus,
-         *   it must have a `{tabIndex}` placeholder to receive the appropriate
-         *   value for the `tabIndex` attribute.
          *
          * * The other element is the container for the children of this node.
          *   It will be identified by the className `{CNAME_CHILDREN}` and it
          *   should enclose the placeholder `{children}`.
          *
-		 * @property TEMPLATE
+		 * @property OUTER_TEMPLATE
 		 * @type {String}
 		 * @default '<div id="{id}" class="{CNAME_NODE}" role="" aria-expanded="{expanded}"><div tabIndex="{tabIndex}"
          class="{CNAME_CONTENT}">{label}</div><div class="{CNAME_CHILDREN}" role="group">{children}</div></div>'
 		 * @static
 		 */
-		TEMPLATE: '<div id="{id}" class="{CNAME_NODE}" role="" aria-expanded="{expanded}">' +
-                        '<div tabIndex="{tabIndex}" class="{CNAME_CONTENT}">{label}</div>' +
-                        '<div class="{CNAME_CHILDREN}" role="group">{children}</div>' +
-                   '</div>',
+        OUTER_TEMPLATE:'<div id="{id}" class="{CNAME_NODE}" role="" aria-expanded="{expanded}">{INNER_TEMPLATE}' +
+                            '<div class="{CNAME_CHILDREN}" role="group">{children}</div></div>',
+        /**
+         * The template for what the user will see of the node.
+         * It has been broken appart from the outer template because
+         * this is the part that the developer is most likely to modify
+         * so that there is no need to repeat the outer envelope over and over again.
+         * For example:
+         *
+            INNER_TEMPLATE:'<div tabIndex="{tabIndex}" class="{CNAME_CONTENT}">{label}</div>',
+
+         * This element must have at least a palceholder for the `{label}` attribute
+         * and any other visual clues to the user.  It must also have the CSS className
+         * `{CNAME_CONTENT}` which will be replaced by a suitable name at execution
+         * and that will help to locate the contents of this node.
+         *
+         * This is the element that would receive the focus of the node, thus,
+         * it must have a `{tabIndex}` placeholder to receive the appropriate
+         * value for the `tabIndex` attribute.
+		 * @property INNER_TEMPLATE
+		 * @type {String}
+		 * @default '<div tabIndex="{tabIndex}" class="{CNAME_CONTENT}">{label}</div>'
+		 * @static
+         */
+        INNER_TEMPLATE:'<div tabIndex="{tabIndex}" class="{CNAME_CONTENT}">{label}</div>',
         /**
          * Collection of CSS class names used in the template.
          * It is written all uppercase because its contents are meant to be constants,
