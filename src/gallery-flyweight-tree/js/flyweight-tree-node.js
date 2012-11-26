@@ -53,25 +53,15 @@ FWNode = Y.Base.create(
          * @private
          */
         _buildCfgPatch: function () {
-            var t = null, constr = this.constructor;
-            if (!constr._buildConfigPatched) {
-                constr._buildConfigPatched = true;
-                Y.mix(constr.CNAMES, constr.superclass.constructor.CNAMES);
-                while (!t) {
-                    t = constr.OUTER_TEMPLATE;
-                    constr = constr.superclass.constructor;
-                }
-                constr = this.constructor;
-                constr.OUTER_TEMPLATE = t;
-                t = null;
-                while (!t) {
-                    t = constr.INNER_TEMPLATE;
-                    constr = constr.superclass.constructor;
-                }
-                constr = this.constructor;
-                constr.INNER_TEMPLATE = t;
-            }
-
+            var cnames = {}, it, ot, constr = this.constructor;
+            YArray.each(this._classes, function (c) {
+                Y.mix(cnames, c.CNAMES);
+                it = it || c.INNER_TEMPLATE;
+                ot = ot || c.OUTER_TEMPLATE;
+            });
+            constr.CNAMES = cnames;
+            constr.INNER_TEMPLATE = it;
+            constr.OUTER_TEMPLATE = ot;
         },
 		/**
 		 * Returns a string with the markup for this node along that of its children
@@ -127,7 +117,9 @@ FWNode = Y.Base.create(
 			if (index === nSiblings - 1) {
 				nodeClasses.push(CNAMES.CNAME_LASTCHILD);
 			}
-            nodeClasses.push(CNAMES.CNAME_TYPE_PREFIX + (iNode.type || 'default'));
+            if (iNode.type) {
+                nodeClasses.push(CNAMES.CNAME_TYPE_PREFIX + root._getTypeString(iNode));
+            }
 			attrs.children = s;
 			attrs.CNAME_NODE = nodeClasses.join(' ');
             attrs.tabIndex = (iNode === root._focusedINode)?0:-1;
