@@ -29,16 +29,10 @@
 var Lang = Y.Lang,
 	YArray = Y.Array,
     FWTV,
+    FWTN,
 	getCName = Y.ClassNameManager.getClassName,
 	cName = function (name) {
 		return getCName('fw-treeview', name);
-	},
-	CNAMES = {
-		cname_toggle: cName('toggle'),
-		cname_icon: cName('icon'),
-		cname_selection: cName('selection'),
-		cname_sel_prefix: cName('selected-state'),
-        cname_label: cName('label')
 	},
 	CBX = 'contentBox',
     EXPANDED = 'expanded',

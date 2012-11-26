@@ -212,16 +212,16 @@ YUI.add('treeview-tests', function(Y) {
             tv.set('focusedNode', node);
 
             A.isFalse(node.get('expanded'), 'node should not be expanded yet');
-            el = Y.one('#' + node.get(ID) + ' .' + Y.FWTreeNode.CNAMES.cname_toggle);
+            el = Y.one('#' + node.get(ID) + ' .' + Y.FWTreeNode.CNAMES.CNAME_TOGGLE);
             el.simulate('click');
             A.isTrue(node.get('expanded'), 'node should be expanded');
             el.simulate('click');
             A.isFalse(node.get('expanded'), 'node should not be expanded');
             A.areEqual(0, node.get(SELECTED), 'node should not be selected');
-            el = Y.one('#' + node.get(ID) + ' .' + Y.FWTreeNode.CNAMES.cname_selection);
+            el = Y.one('#' + node.get(ID) + ' .' + Y.FWTreeNode.CNAMES.CNAME_SELECTION);
             el.simulate('click');
             A.areEqual(2, node.get(SELECTED), 'node should now be selected');
-            el = Y.one('#' + node.get(ID) + ' .' + Y.FWTreeNode.CNAMES.cname_label);
+            el = Y.one('#' + node.get(ID) + ' .' + Y.FWTreeNode.CNAMES.CNAME_LABEL);
             el.simulate('click');
             A.areEqual(2, node.get(SELECTED), 'clicking on the label should not change anything');
             A.isFalse(node.get('expanded'), 'clicking on the label should not change anything');

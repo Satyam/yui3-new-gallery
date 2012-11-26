@@ -10,7 +10,7 @@
  *  @extends FlyweightTreeNode
  *  @constructor
  */
- Y.FWTreeNode = Y.Base.create(
+ FWTN = Y.Base.create(
 	'fw-treenode',
 	Y.FlyweightTreeNode,
 	[],
@@ -22,6 +22,8 @@
                 this.after('spacebar', this.toggleSelection),
                 this.after(EXPANDED + CHANGE, this._afterExpandedChanged)
             );
+            // This is a patch because the _buildCfg does not work
+            Y.mix(this.constructor.CNAMES, this.constructor.superclass.constructor.CNAMES);
 		},
         /**
          * Listens to changes in the expanded attribute to invalidate and force
@@ -40,12 +42,13 @@
 		 * @private
 		 */
 		_afterClick: function (ev) {
-			var target = ev.domEvent.target;
-			if (target.hasClass(CNAMES.cname_toggle)) {
+			var target = ev.domEvent.target,
+                CNAMES = FWTN.CNAMES;
+			if (target.hasClass(CNAMES.CNAME_TOGGLE)) {
 				this.toggle();
-			} else if (target.hasClass(CNAMES.cname_selection)) {
+			} else if (target.hasClass(CNAMES.CNAME_SELECTION)) {
 				this.toggleSelection();
-			} else if (target.hasClass(CNAMES.cname_label) || target.hasClass(CNAMES.cname_icon)) {
+			} else if (target.hasClass(CNAMES.CNAME_LABEL) || target.hasClass(CNAMES.CNAME_ICON)) {
 				if (this.get('root').get('toggleOnLabelClick')) {
 					this.toggle();
 				}
@@ -66,7 +69,7 @@
 		 * @private
 		 */
         _afterLabelChange: function (ev) {
-            var el = Y.one('#' + this._iNode.id + ' .' + CNAMES.cname_label);
+            var el = Y.one('#' + this._iNode.id + ' .' + FWTN.CNAMES.CNAME_LABEL);
             if (el) {
                 el.setHTML(ev.newVal);
             }
@@ -80,7 +83,7 @@
 		 */
 		_afterSelectedChange: function (ev) {
 			var selected = ev.newVal,
-                prefix = CNAMES.cname_sel_prefix + '-',
+                prefix = FWTN.CNAMES.CNAME_SEL_PREFIX + '-',
                 el;
 
 			if (!this.isRoot()) {
@@ -127,7 +130,7 @@
 		 * @private
 		 */
 		_dynamicLoadReturn: function () {
-            Y.FWTreeNode.superclass._dynamicLoadReturn.apply(this, arguments);
+            FWTN.superclass._dynamicLoadReturn.apply(this, arguments);
 			if (this.get('propagateDown')) {
 				var selected = this.get(SELECTED);
 				this.forSomeChildren(function(node) {
@@ -172,12 +175,11 @@
 		 * @type String
 		 * @static
 		 */
-		TEMPLATE: Lang.sub(
-            '<li id="{id}" class="{cname_node} {cname_sel_prefix}-{selected}" ' +
+		TEMPLATE: '<li id="{id}" class="{CNAME_NODE} {CNAME_SEL_PREFIX}-{selected}" ' +
                 'role="treeitem" aria-expanded="{expanded}" aria-checked="{_aria_checked}">' +
-            '<div tabIndex="{tabIndex}" class="{cname_content}"><div class="{cname_toggle}"></div>' +
-            '<div class="{cname_icon}"></div><div class="{cname_selection}"></div><div class="{cname_label}">{label}</div></div>' +
-            '<ul class="{cname_children}" role="group">{children}</ul></li>', CNAMES),
+            '<div tabIndex="{tabIndex}" class="{CNAME_CONTENT}"><div class="{CNAME_TOGGLE}"></div>' +
+            '<div class="{CNAME_ICON}"></div><div class="{CNAME_SELECTION}"></div><div class="{CNAME_LABEL}">{label}</div></div>' +
+            '<ul class="{CNAME_CHILDREN}" role="group">{children}</ul></li>',
         /**
          * Collection of classNames to set in the template.
          * @property CNAMES
@@ -185,7 +187,13 @@
          * @static
          * @final
          */
-        CNAMES: CNAMES,
+        CNAMES: {
+            CNAME_TOGGLE: cName('toggle'),
+            CNAME_ICON: cName('icon'),
+            CNAME_SELECTION: cName('selection'),
+            CNAME_SEL_PREFIX: cName('selected-state'),
+            CNAME_LABEL: cName('label')
+        },
 		/**
 		 * Constant to use with the `selected` attribute to indicate the node is not selected.
 		 * @property NOT_SELECTED
@@ -314,3 +322,5 @@
  * @event click
  * @param ev {EventFacade} Standard YUI event facade for mouse events.
  */
+
+Y.FWTreeNode = FWTN;
