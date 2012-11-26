@@ -82,7 +82,7 @@ YUI().use('gallery-fwt-treeview', function(Y) {
         through the page and the node that will respond to pressing the `Enter` key.</li>
 </ul>
 
-<p>The `tree` configuration attribute is only valid at instantiation.</p>
+<p>Both the `tree` FWTreeView configuration attribute as well as the `type` attribute of each node are only valid at instantiation.</p>
 
 <h3>Features</h3>
 <ul>
@@ -203,7 +203,7 @@ with the name of the class under `Y` so that `"MyNodeType"` will make FWTreeView
 try to create an instance of `Y.MyNodeType`.</p>
 
 <p>A developer might wish to create a custom node type to have extra information
-on a node or to change the look. For example, lets assume a developer needs
+on a node, to change the look or change the defaults. For example, lets assume a developer needs
 to show artist information from Yahoo Music site via YQL.
 
 ```
@@ -213,14 +213,9 @@ var ArtistNode = Y.Base.create(
     [ ],
     { },
     {
-        TEMPLATE: Y.Lang.sub(
-            '<li id="{id}" class="artistnode {cname_node}">' +
-            '<div tabIndex="{tabIndex}" class="{cname_content}"><div class="{cname_toggle}"></div>' +
-            //-------------
-            '<div class="{cname_label}"><a href="{url}">{label}</a></div>' +
-            //-------------
-            '</div><ul class="{cname_children}">{children}</ul></li>',
-            Y.FWTreeNode.CNAMES
+        INNER_TEMPLATE:
+            '<div tabIndex="{tabIndex}" class="{CNAME_CONTENT}"><div class="{CNAME_TOGGLE}"></div>' +
+            '<div class="{CNAME_LABEL}"><a href="{url}">{label}</a></div></div>'
         ),
         ATTRS: {
             url: {},
@@ -231,10 +226,14 @@ var ArtistNode = Y.Base.create(
 ```
 
 <p>In the example above, a new `ArtistNode` is created based on `Y.FWTreeNode`.
-The `TEMPLATE` has been changed.  Based on the original taken from the source
+The `INNER_TEMPLATE` has been changed.  FWTreeView uses two templates, one for the outer
+envelope of the node, called `OUTER_TEMPLATE` and one for the visible part of the node,
+excluding the children.  It is the `INNER_TEMPLATE` that most developers are
+likely to ever change and that is why they were defined separate.</p>
+<p>Based on the original taken from the source
 for FWTreeNode, it has been simplified by dropping markup related to WAI-ARIA
-and node selection, which will not be used.  Instead, the line isolated
-in between comments has a change.  The placeholder for the `label` attribute
+and node selection, which will not be used.  Instead, the second line has a change.
+The placeholder for the `label` attribute
 has been enclosed in an anchor tag using the value of the `url` attribute,
 defined later.</p>
 
@@ -246,7 +245,47 @@ load child nodes related to this artist.</p>
 
 <p>Actually, the example above is not a good solution because the anchor element
 can get the focus, and that competes with FWTreeView's own focusing mechanism.
-A better solution is to use events, as shown below.</p>
+A better solution is to use events, as shown [[#events|below]].</p>
+
+
+<p>Selection and propagation of selection state are enabled by default in all nodes.
+It is easy to create a node type that does not have propagation enabled
+and then use that as the default node type:</p>
+```
+var ArtistNode = Y.Base.create(
+    'artist-node',
+    Y.FWTreeNode,
+    [ ],
+    { },
+    {
+        ATTRS: {
+            propagateUp: false,
+            propagateDown: false
+        }
+    }
+);
+
+// Later on:
+var tv = new Y.FWTreeView({
+    tree: treeDef,
+    defaultType: ArtistNode
+});
+```
+<p>The same could have been accomplished without defining a new node type
+after the creation of the tree by doing:</p>
+```
+tv.forSomeNodes(function (node) {
+    node.setAttr({propagateUp:false, propagateDown: false});
+});
+```
+<p>But, if you have a mixture of nodes with and without propagation (or any other
+particular node setting) defining different types might be easier.</p>
+
+<p>To help in styling, nodes may have a CSS className identifying
+the node type.  For nodes other than the default type, a className will be formed
+using the `yui3-flyweight-tree-node-type-` prefix with the value of the `type`
+configuration attribute if it is a string, or the `NAME` property if `type`
+was an object reference.</p>
 
 <h3>Pooled nodes</h3>
 
@@ -287,7 +326,7 @@ For that purpose, all such events get an extra `node` property on the event faca
 to the template, either an `<img>` tag or a `<div>` with a className
 to set a suitable background image.  The changed line from the template above might be:</p>
 ```
-<div class="{cname_label}" role="link">{label} <div class="navigate"></div></div>' +
+<div class="{CNAME_LABEL}" role="link">{label} <div class="navigate"></div></div>' +
 ```
 <p>Note that instead of an actual anchor element, the whole label is given the role of `link`
 so the user listening to a screen reader will know that pressing `enter` will navigate

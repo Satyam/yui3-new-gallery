@@ -85,7 +85,9 @@
 			var selected = ev.newVal,
                 prefix = FWTN.CNAMES.CNAME_SEL_PREFIX + '-',
                 el;
-
+            if (!this.get(SEL_ENABLED)) {
+                return;
+            }
 			if (!this.isRoot()) {
 				el = Y.one('#' + this.get('id'));
                 if (el) {
@@ -111,7 +113,7 @@
          * @private
          */
         _ariaCheckedGetter: function () {
-            return ['false','mixed','true'][this.get(SELECTED)];
+            return ['false','mixed','true'][this.get(SELECTED) ||0];
         },
         /**
          * Setter for the {{ćrossLink "selected:attribute}}{{/crossLink}}.
@@ -122,6 +124,27 @@
          */
         _selectedSetter: function (value) {
             return (value?FULLY_SELECTED:NOT_SELECTED);
+        },
+        /**
+         * Getter for the `selected` attribute.
+         * Returns false when selection is not enabled.
+         * @method _selectedGetter
+         * @param value {integer} current value
+         * @return {integer} current value or false if not enabled
+         * @private
+         */
+        _selectedGetter: function (value) {
+            return (this.get(SEL_ENABLED)?value||0:null);
+        },
+        /**
+         * Getter for both the `propagateUp` and `propagateDown` attributes.
+         * @method _propagateGetter
+         * @param value {Boolean} current value
+         * @return {Boolean} the state of the attribute
+         * @private
+         */
+        _propagateGetter: function (value) {
+            return (this.get(SEL_ENABLED)?(value !== false):false);
         },
 		/**
 		 * Overrides the original in FlyweightTreeNode so as to propagate the selected state
@@ -171,6 +194,8 @@
 	{
 		/**
 		 * Outer template to produce the markup for a node in the tree.
+         * It replaces the standard one provided by FlyweightTreeNode.
+         * Adds the proper ARIA role and node selection.
 		 * @property OUTER_TEMPLATE
 		 * @type String
 		 * @static
@@ -181,8 +206,11 @@
             '<ul class="{CNAME_CHILDREN}" role="group">{children}</ul></li>',
 		/**
 		 * Template to produce the markup for a node in the tree.
+         * It replaces the standard one provided by FlyweightTreeNode.
+         * Adds places for the toggle and selection icons, an extra app-dependent icon and the label.
 		 * @property INNER_TEMPLATE
 		 * @type String
+         *
 		 * @static
 		 */
 		INNER_TEMPLATE: '<div tabIndex="{tabIndex}" class="{CNAME_CONTENT}"><div class="{CNAME_TOGGLE}"></div>' +
@@ -244,6 +272,7 @@
 			 * - Y.FWTreeNode.NOT\_SELECTED (0) not selected
 			 * - Y.FWTreeNode.PARTIALLY\_SELECTED (1) partially selected: some children are selected, some not or partially selected.
 			 * - Y.FWTreeNode.FULLY\_SELECTED (2) fully selected.
+             * - null when {{#crossLing "selectionEnabled:attribute"}}{{/crossLink}} is not enabled
              *
              * `selected`can be set to:
              *
@@ -261,7 +290,8 @@
 			 */
 			selected: {
 				value:NOT_SELECTED,
-                setter: '_selectedSetter'
+                setter: '_selectedSetter',
+                getter: '_selectedGetter'
 			},
             /**
              * String value equivalent to the {{#crossLink "selected:attribute"}}{{/crossLink}}
@@ -276,6 +306,16 @@
                 readOnly: true,
                 getter: '_ariaCheckedGetter'
             },
+            /**
+             * Enables node selection. Nodes with selection enabled w
+             * @attribute selectEnabled
+             * @type Boolean
+             * @default true
+             */
+            selectionEnabled: {
+                value: true,
+                validator: Lang.isBoolean
+            },
 			/**
 			 * Whether selection of one node should propagate to its parent.
              * See {{#crossLink "selected:attribute"}}{{/crossLink}}.
@@ -285,7 +325,8 @@
 			 */
 			propagateUp: {
 				value: true,
-				validator: Lang.isBoolean
+				validator: Lang.isBoolean,
+                getter: '_propagageGetter'
 			},
 			/**
 			 * Whether selection of one node should propagate to its children.
@@ -296,7 +337,8 @@
 			 */
 			propagateDown: {
 				value: true,
-				validator: Lang.isBoolean
+				validator: Lang.isBoolean,
+                getter: '_propagageGetter'
 			}
 		}
 	}
