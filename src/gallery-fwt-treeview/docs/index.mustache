@@ -86,7 +86,7 @@ YUI().use('gallery-fwt-treeview', function(Y) {
 
 <h3>Features</h3>
 <ul>
-<li>Keyboard navigations.</li>
+<li>Keyboard navigation.</li>
 <li>WAI-ARIA roles and states.</li>
 <li>Node selection / highlighting</li>
 <li>Dynamic loading.</li>
@@ -97,13 +97,17 @@ YUI().use('gallery-fwt-treeview', function(Y) {
 
 <h3>Node selection</h3>
 
-<p>Node selection is always enabled in FWTreeView.
+<p>Node selection is enabled by default in FWTreeView.
 Usually, it is not visible since the way to show it to the user might be different according to taste.
 The CSS StyleSheet provided uses checkboxes to show the selection state.
 To use it the container of the tree view must have the CSS className `yui3-fw-treeview-checkbox`:</p>
 ```
 <div id="tree-with-selection" class="yui3-fw-treeview-checkbox"></div>
 ```
+<p>Nodes have the `selectionEnabled` configuration attribute
+set by default so they will all respond to node selection.
+The selected state of a node can be read or set via the `selected` attribute.</p>
+
 <p>Nodes can be fully, partially or not selected.
 These are represented by the values of the static constants provided (see API docs).
 A partially selected node is one where some of its children are selected but not all.
@@ -123,6 +127,12 @@ be selected.  If the children have a mix of selected, not selected or partially
 selected, the parent will be partially selected.
 When `propagateDown` is true, any changes in a node will propagate to its children,
 even those not yet loaded.</p>
+
+<p>Values for the `selected` attribute set at instantiation will not trigger
+propagation, they will be accepted as they come.  Nodes loaded dynamically
+will have their `selected` attribute set as their parent because it behaves as though
+the nodes had always been there and, as such, they would have inherited the
+selected state from their parent.</p>
 
 <h3>Traversing the tree</h3>
 

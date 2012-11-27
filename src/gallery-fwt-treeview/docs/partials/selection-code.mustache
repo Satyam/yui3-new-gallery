@@ -1,36 +1,3 @@
-YUI().use('gallery-fwt-treeview', function (Y) {
-
-    // This is the same tree as in the basic example
-    var tv = new Y.FWTreeView({
-        tree: [
-        {
-            label: 'label 0',
-            children: [
-                {
-                    label: 'label 0-0',
-                    expanded: false,
-                    children: [
-                        {
-                            label: 'label 0-0-0'
-                        },
-                        {
-                            label: 'label 0-0-1',
-                            children: [
-                                {label: 'label 0-0-1'}
-                            ]
-                        }
-                    ]
-                },
-                {
-                    label: 'label 0-1'
-                }
-            ]
-        },
-        {
-            label: 'label 1'
-        }
-    ]});
-    tv.render('#container');
 
     // the code to read and show the results of selected nodes.
     Y.one('#show').on('click', function () {
@@ -69,4 +36,3 @@ YUI().use('gallery-fwt-treeview', function (Y) {
         });
     });
 
-});

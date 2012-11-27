@@ -3,6 +3,7 @@
 </div>
 <div class="example yui3-skin-sam">
     <div id="container"  class="yui3-fw-treeview-checkbox"></div>
+    <hr/>
     <div>
         <input id="up" type="checkbox" checked> propagateUp &nbsp; &nbsp;
         <input id="down" type="checkbox" checked> propagateDown &nbsp; &nbsp;
@@ -11,7 +12,10 @@
     <div id="log"></div>
 
     <script>
+YUI().use('gallery-fwt-treeview', function (Y) {
+    {{>tree-simple-code}}
     {{>selection-code}}
+});
     </script>
 
 </div>
@@ -24,10 +28,11 @@ like:</p>
 ```
 <div id="container" class="yui3-fw-treeview-checkbox"></div>
 ```
-<p>The example above uses the same code as the [[tree-simple.html|basic example]]
+<p>The example above uses the same code as the <a href="tree-simple.html">basic example</a>
 to show the tree but the class name on the container makes the selection checkboxes visible.</p>
 <p>Clicking on the checkboxes or pressing the space bar when the a node has the focus
 changes the selected state of the node.</p>
+
 <p>FWTreeView optionally supports propagation of selection.
 Selecting a node may select all its descendants while, at the same time,
 it may affect its ancestors.  This is controlled by the `propagateUp` and `propagateDown`
@@ -46,7 +51,9 @@ force a node to have a 1 state, it can only be the result of propagation.
 On setting the `selected` attribute, any falsy value will make it 0, any thruthy
 value will make it 2.</p>
 
-<p>
+<p>See the <a href="tree-simple.html">basic example</a> for the code to draw the tree.
+This extra code has been added to respond to the changes in setting propagation
+and showing the data from the tree:</p>
 
 
 

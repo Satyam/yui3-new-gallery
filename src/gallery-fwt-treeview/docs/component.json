@@ -30,6 +30,14 @@
             "modules" : ["gallery-fwt-treeview"],
             "tags" : ["TreeView", "selection"],
             "hideTableOfContents": true
+        },
+        {
+            "name" : "complex",
+            "displayName" : "Complex example",
+            "description" : "Example using different node types, dynamic loading and events.",
+            "modules" : ["gallery-fwt-treeview"],
+            "tags" : ["TreeView", "events", "node types", "dynamic loading"],
+            "hideTableOfContents": true
         }
     ]
 }
