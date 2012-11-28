@@ -62,9 +62,6 @@ YUI().use('gallery-fwt-treeview', function(Y) {
         When this attribute is set, it means TreeView will show no such toggle icon and will avoid asking for children.</li>
     <li>`selected`: Indicates whether a node is selected. Nodes can be partially selected so this variable may contain 3 different values.
         See the API docs for more info.</li>
-    <li>`template`: Contains a string to produce the markup for the node.
-        If null, it will use the static `TEMPLATE` property this node or of the closest ancestor.
-        Rather than setting the template on a per-node basis, it is better to redefine the `TEMPLATE` in a subclass of FWTreeNode.</li>
 </ul>
 
 <p>`label` is the only required property.  FWTreeView can also accept other configuration attributes:</p>
