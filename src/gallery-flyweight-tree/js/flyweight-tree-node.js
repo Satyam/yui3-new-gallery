@@ -134,6 +134,7 @@ FWNode = Y.Base.create(
 		 * @private
 		 */
 		_slideTo: function (iNode) {
+            iNode._nodeInstance = this;
 			this._iNode = iNode;
 			this._stateProxy = iNode;
 		},
@@ -295,7 +296,11 @@ FWNode = Y.Base.create(
 		 * @chainable
 		 */
 		hold: function () {
-			return (this._iNode._held = this);
+            var self = this,
+                iNode = self._iNode;
+
+            iNode._refCount += 1;
+			return self;
 		},
 		/**
 		 * Allows this instance to be returned to the pool and reused.
@@ -305,9 +310,9 @@ FWNode = Y.Base.create(
 		 * @chainable
 		 */
 		release: function () {
-			this._iNode._held = null;
-			this._root._poolReturn(this);
-			return this;
+            var self = this;
+			self._root._poolReturn(self);
+			return self;
 		},
 		/**
 		 * Returns the parent node for this node or null if none exists.

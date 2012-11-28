@@ -319,22 +319,23 @@ FWMgr = Y.Base.create(
         _poolFetch: function(iNode) {
 
             var pool,
-                fwNode = iNode._held,
+                fwNode = iNode._nodeInstance,
                 type = this._getTypeString(iNode);
 
-            if (fwNode) {
-                return fwNode;
+            if (!fwNode) {
+                pool = this._pool[type];
+                if (pool === undefined) {
+                    pool = this._pool[type] = [];
+                }
+                if (pool.length) {
+                    fwNode = pool.pop();
+                    fwNode._slideTo(iNode);
+                } else {
+                    fwNode = this._createNode(iNode);
+                }
             }
-            pool = this._pool[type];
-            if (pool === undefined) {
-                pool = this._pool[type] = [];
-            }
-            if (pool.length) {
-                fwNode = pool.pop();
-                fwNode._slideTo(iNode);
-                return fwNode;
-            }
-            return this._createNode(iNode);
+            iNode._refCount = (iNode._refCount || 0) + 1;
+            return fwNode;
         },
         /**
          * Returns the FlyweightTreeNode instance to the pool.
@@ -344,11 +345,16 @@ FWMgr = Y.Base.create(
          * @protected
          */
         _poolReturn: function (fwNode) {
-            if (fwNode._iNode._held) {
+            var pool,
+                iNode = fwNode._iNode,
+                type = this._getTypeString(iNode);
+
+            iNode._refCount -= 1 ;
+            if (iNode._refCount) {
                 return;
             }
-            var pool,
-                type = this._getTypeString(fwNode._iNode);
+            fwNode._iNode = null;
+            iNode._nodeInstance = null;
             pool = this._pool[type];
             if (pool) {
                 pool.push(fwNode);
