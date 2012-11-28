@@ -97,11 +97,11 @@
 				if (this.get('propagateUp') && ev.src !== 'propagatingDown') {
 					this.getParent()._childSelectedChange().release();
 				}
-			}
-			if (this.get('propagateDown') && ev.src !== 'propagatingUp') {
-				this.forSomeChildren(function(node) {
-					node.set(SELECTED , selected, 'propagatingDown');
-				});
+                if (this.get('propagateDown') && ev.src !== 'propagatingUp') {
+                    this.forSomeChildren(function(node) {
+                        node.set(SELECTED , selected, 'propagatingDown');
+                    });
+                }
 			}
         },
         /**

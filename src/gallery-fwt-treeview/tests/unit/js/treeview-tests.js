@@ -228,7 +228,7 @@ YUI.add('treeview-tests', function(Y) {
             tv.set('toggleOnLabelClick', true);
             el.simulate('click');
             A.isTrue(node.get('expanded'), 'with toggleOnLabelClick set, it should expand');
-
+            node.release();
             tv.destroy();
         },
 
@@ -243,8 +243,14 @@ YUI.add('treeview-tests', function(Y) {
                 var focusedNode = tv.getNodeBy(LABEL, label);
                 tv.set('focusedNode', focusedNode);
 
-                var ancestor = focusedNode, ancestry = [];
-                while ((ancestor = ancestor.getParent())) {
+                var node , ancestor = focusedNode , ancestry = [];
+                while (ancestor) {
+                    node = ancestor;
+                    ancestor = ancestor.getParent();
+                    node.release();
+                    if (!ancestor) {
+                        break;
+                    }
                     ancestry.push(ancestor.get(ID));
                 }
                 tv.forSomeNodes(function (node) {
@@ -269,6 +275,7 @@ YUI.add('treeview-tests', function(Y) {
 
             A.areSame(node, other, 'Node references should be the same');
             node.release();
+            other.release();
             tv.destroy();
         },
         'Moving around with the keys': function () {
@@ -289,14 +296,14 @@ YUI.add('treeview-tests', function(Y) {
                     press(key);
                     is(label, step);
                 },
-                expanded = function (state) {
+                expanded = function (state, step) {
                     var node = tv.get('focusedNode');
-                    A.areEqual(state, node.get('expanded'), 'Should be expanded?: ' + state);
+                    A.areEqual(state, node.get('expanded'), 'Should be expanded?: ' + step);
                     node.release();
                 },
-                selected = function (state) {
+                selected = function (state, step) {
                     var node = tv.get('focusedNode');
-                    A.areEqual(state, node.get('selected'), 'Should be selected?: ' + state);
+                    A.areEqual(state, node.get('selected'), 'Should be selected?: ' + step);
                     node.release();
                 },
 
@@ -310,13 +317,13 @@ YUI.add('treeview-tests', function(Y) {
             test(40, '2',4); // down
             test(40, '2',5); // down (shouldn't move)
             test(36, '0',6); // home
-            expanded(false);
+            expanded(false,6);
             test(39, '0',7); // right, first press should expand
-            expanded(true);
+            expanded(true,7);
             test(39, '0-0',8); // right, second press should move
-            expanded(false);
+            expanded(false,8);
             test(39, '0-0',9);
-            expanded(true);
+            expanded(true,9);
             test(39, '0-0-0',10); // right
             test(40, '0-0-1',11); // down
             test(40, '0-0-2',12); // down
@@ -326,34 +333,34 @@ YUI.add('treeview-tests', function(Y) {
             test(40, '2',16); // down
             test(106, '2',17); // * (expand all);
             test(39, '2-0',18);
-            expanded(true);
+            expanded(true,18);
             test(39, '2-0-0',19);
             test(39, '2-0-0',19); // right: shouldn't have moved
             test(40, '2-0-1',20);
             test(37, '2-0',21); // left
-            expanded(true);
+            expanded(true,21);
             test(37, '2-0',22); // left
-            expanded(false);
+            expanded(false,22);
             test(37, '2',23); // left
-            expanded(true);
+            expanded(true,23);
             test(37, '2',24); // left
-            expanded(false);
-            test(37, '2',24); // left (shouldn't have moved)'
+            expanded(false,24);
+            test(37, '2',24.5); // left (shouldn't have moved)'
             test(36, '0',25); // home
             test(35, '2',26); //end
             test(38, '1-2-2',27); //up
             test(37, '1-2',28); // left
-            selected(false);
+            selected(false,28);
             test(32, '1-2',29); // space bar
-            selected(2);
+            selected(2,29);
             test(39, '1-2-0',30);
-            selected(2);
+            selected(2,30);
             test(38, '1-2',31); //up
             test(37, '1-2',32); // up
             test(37, '1',32); // up
-            selected(1);
+            selected(1,32);
             test(38,'0-2-2',33);
-            selected(0);
+            selected(0,33);
 
             tv.after('enterkey', function (ev) {
                 A.areEqual('label 0-2-2', ev.node.get(LABEL), 'Label on enter');
