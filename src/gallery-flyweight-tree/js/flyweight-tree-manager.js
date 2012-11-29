@@ -486,7 +486,7 @@ FWMgr = Y.Base.create(
                         return forOneLevel(fwNode, depth + 1);
                     });
                 },
-                ret = forOneLevel(root, 1);
+                ret = forOneLevel(root, 0);
             root.release();
             return ret;
         },
