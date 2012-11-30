@@ -22,8 +22,6 @@
                 this.after('spacebar', this.toggleSelection),
                 this.after(EXPANDED + CHANGE, this._afterExpandedChanged)
             );
-            // This is a patch because the _buildCfg does not work
-            this._buildCfgPatch();
 		},
         /**
          * Listens to changes in the expanded attribute to invalidate and force
