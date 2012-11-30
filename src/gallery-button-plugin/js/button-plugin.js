@@ -7,6 +7,8 @@
 	for groups of toggles points to the button currently presssed.
 	Relies on the cssbutton module for styling.
 	@module gallery-button-plugin
+*/
+/**
 	@class ButtonPlugin
 	@static
 */

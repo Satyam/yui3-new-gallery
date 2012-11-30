@@ -1,11 +1,19 @@
 {
     "name"       : "gallery-button-plugin",
     "displayName": "Gallery: button-plugin",
-    "description": "A plugin for Y.Node that converts regular buttons marked with a given className into toggle buttons.
-It will also make groups of toggle buttons within a container mutually exclusive of one another.",
+    "description": "A plugin for Y.Node that converts regular buttons marked with a given className into toggle buttons.It will also make groups of toggle buttons within a container mutually exclusive of one another.",
     "author"     : [ "satyam" ],
 
     "tags": [ "gallery" ],
 
-    "examples": []
+    "examples": [
+        {
+            "name" : "basic",
+            "displayName" : "Basic ButtonPlugin Usage",
+            "description" : "Shows how to use the plugin.",
+            "modules" : ["gallery-button-plugin"],
+            "tags" : ["button", "toggle"],
+            "hideTableOfContents": true
+        }
+    ]
 }
