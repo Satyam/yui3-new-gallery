@@ -379,8 +379,6 @@ Y.FWTreeView = FWTV;/**
                 this.after('spacebar', this.toggleSelection),
                 this.after(EXPANDED + CHANGE, this._afterExpandedChanged)
             );
-            // This is a patch because the _buildCfg does not work
-            this._buildCfgPatch();
 		},
         /**
          * Listens to changes in the expanded attribute to invalidate and force
@@ -454,11 +452,11 @@ Y.FWTreeView = FWTV;/**
 				if (this.get('propagateUp') && ev.src !== 'propagatingDown') {
 					this.getParent()._childSelectedChange().release();
 				}
-			}
-			if (this.get('propagateDown') && ev.src !== 'propagatingUp') {
-				this.forSomeChildren(function(node) {
-					node.set(SELECTED , selected, 'propagatingDown');
-				});
+                if (this.get('propagateDown') && ev.src !== 'propagatingUp') {
+                    this.forSomeChildren(function(node) {
+                        node.set(SELECTED , selected, 'propagatingDown');
+                    });
+                }
 			}
         },
         /**
