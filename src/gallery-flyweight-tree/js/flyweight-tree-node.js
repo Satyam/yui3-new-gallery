@@ -45,6 +45,8 @@ FWNode = Y.Base.create(
             this._root = cfg.root;
             this.after('expandedChange', this._afterExpandedChange);
             this.after('labelChange', this._afterLabelChange);
+            // This is a patch because the _buildCfg does not work
+            this._buildCfgPatch();
         },
         /**
          * Patch to work around the issue with the static _buildCfg property of Base

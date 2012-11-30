@@ -296,13 +296,16 @@ FWMgr = Y.Base.create(
          * @private
          */
         _getTypeString: function (iNode) {
-            var type = iNode.type || DEFAULT_POOL;
-            if (!Lang.isString(type)) {
-                if (Lang.isObject(type)) {
-                    type = type.NAME;
-                } else {
-                    throw "Node contains unknown type";
-                }
+            var type = iNode.type;
+            if (!type) {
+                return DEFAULT_POOL;
+            }
+            if (Lang.isString(type)) {
+                type = Y[type];
+            }
+            type = type.NAME;
+            if (!type) {
+                throw "Node contains unknown type";
             }
             return type;
         },
