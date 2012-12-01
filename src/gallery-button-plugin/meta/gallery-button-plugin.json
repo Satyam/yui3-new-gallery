@@ -1,5 +1,6 @@
 {
     "gallery-button-plugin": {
-        "requires":["node", "cssbutton"]
+        "requires":["node"],
+        "optional":["cssbutton"]
     }
 }
