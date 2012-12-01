@@ -127,9 +127,9 @@ var C_BUTTON = 'yui3-button',
         },
 
         /**
-            Plugs into a toggle button
+            Plugs into a toggle button.
             @method _addToggleButton
-            @param node {Node} Reference to the Node to be plugged into
+            @param node {Node} Reference to the Node to be plugged into.
             @private
             @static
         */
@@ -148,10 +148,11 @@ var C_BUTTON = 'yui3-button',
             });
 
         },
+
         /**
-            Plugs into a container of mutually exclusive toggle buttons
+            Plugs into a container of mutually exclusive toggle buttons.
             @method _addButtonGroup
-            @param node {Node} Reference to the container of the buttons
+            @param node {Node} Reference to the container of the buttons.
             @private
             @static
         */
@@ -179,8 +180,9 @@ var C_BUTTON = 'yui3-button',
             and elements with the className `yui3-button-group-exclusive` and
             plugs them with this module
             @method addToggles
-            @param [container] {Node|string} Node instance or css selector of the element
-                containing the buttons or button groups to be plugged into.
+            @param [container] {Node|string} Node instance or css selector of the
+                button or button groups to be plugged into,
+                or a container holding the buttons and groups.
                 Assumes the document body if missing.
             @param [cssClasses] {Object} CSS classes to override
             @static
@@ -241,6 +243,13 @@ Y.Node.ATTRS[SELECTED] = {
     @type Y.Node
     @private
  */
+ /**
+    Hash with the CSS classNames to use/apply to this Node
+    @property _cssClasses
+    @for Node
+    @type Object
+    @private
+  */
 
 
 Y.ButtonPlugin = btn;
