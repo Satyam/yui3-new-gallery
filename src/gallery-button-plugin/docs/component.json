@@ -8,11 +8,27 @@
 
     "examples": [
         {
-            "name" : "basic",
-            "displayName" : "Basic ButtonPlugin Usage",
-            "description" : "Shows how to use the plugin.",
+            "name" : "single-toggle",
+            "displayName" : "Single toggle button",
+            "description" : "Shows how to create and handle a single toggle button.",
             "modules" : ["gallery-button-plugin"],
             "tags" : ["button", "toggle"],
+            "hideTableOfContents": true
+        },
+        {
+            "name" : "button-group",
+            "displayName" : "Groups of toggle buttons",
+            "description" : "Shows how to create and handle multiple mutually exclusive toggle buttons.",
+            "modules" : ["gallery-button-plugin"],
+            "tags" : ["button", "toggle", "groups"],
+            "hideTableOfContents": true
+        },
+        {
+            "name" : "awesome",
+            "displayName" : "Using Bootstrap and Font Awesome",
+            "description" : "Shows usage of alternate styling libraries.",
+            "modules" : ["gallery-button-plugin"],
+            "tags" : ["button", "toggle", "groups","bootstrap", "twitter", "awesome"],
             "hideTableOfContents": true
         }
     ]

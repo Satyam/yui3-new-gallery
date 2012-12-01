@@ -8,7 +8,7 @@ It will also make groups of toggle buttons within a container mutually exclusive
 <h2>Description</h2>
 
 <p>All browsers handle regular buttons in the proper way.
-Styling components abound, such as YUI's own CSSButton, now part of the Button module.
+Styling components abound, such as YUI's own CSS Button, now part of the Button module.
 The only thing browsers don't do well is toggle buttons and groups of
 toggle buttons. This adds the toggling behavior to buttons properly marked
 without any undue costs in terms of code size.</p>
@@ -36,7 +36,8 @@ just as with any other toggle buttons.</p>
 
 <p>The plugin adds the `aria-pressed` attribute to active toggle buttons.</p>
 
-<p>The plugin relies on the CSS Button module for styling.
+<p>The plugin defaults to using the `cssbutton` module for styling, however, they are not included
+and other styling libraries can be used instead. For the rest of this guide, the CSS Button is assumed.
 Thus, buttons also have to be marked with the `yui3-button` className to have the proper styling.</p>
 
 <p>Regular buttons or groups of otherwise unrelated buttons,
