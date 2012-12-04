@@ -1,8 +1,9 @@
 {
     "name"       : "gallery-fwt-treeview",
-    "displayName": "Gallery: fwt-treeview",
+    "displayName": "Gallery: gallery-fwt-treeview",
     "description": "A TreeView widget using the Flyweight pattern for its nodes so as to save memory.  It uses the classes in the gallery-flyweight-tree module.",
-    "author"     : [ "satyam" ],
+    "author"     : [ "Daniel Barreiro (a.k.a.: satyam)" ],
+    "use"        : ["gallery-fwt-treeview"],
 
     "tags": [ "gallery" ,"treeview", "flyweight pattern"],
 

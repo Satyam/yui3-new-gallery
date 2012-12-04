@@ -1,11 +1,11 @@
 <div class="intro">
     <p>
-    A TreeView widget using the Flyweight pattern for its nodes so as to save memory and improve performance.
+    {{displayName}} is a TreeView widget using the Flyweight pattern for its nodes so as to save memory and improve performance.
     It extends the classes in the gallery-flyweight-tree module.
     </p>
 </div>
-
-<h3>Description</h3>
+{{>getting-started}}
+<h2>Description</h2>
 
 <p>The FWTreeView uses the Flyweight Pattern to reduce memory consumption.
 YUI has not have a TreeView in all these years because the standard solution, to have
@@ -81,7 +81,7 @@ YUI().use('gallery-fwt-treeview', function(Y) {
 
 <p>Both the `tree` FWTreeView configuration attribute as well as the `type` attribute of each node are only valid at instantiation.</p>
 
-<h3>Features</h3>
+<h2>Features</h2>
 <ul>
 <li>Keyboard navigation.</li>
 <li>WAI-ARIA roles and states.</li>
@@ -92,7 +92,7 @@ YUI().use('gallery-fwt-treeview', function(Y) {
 <li>Lazy rendering: nodes are rendered when their parent is expanded.</li>
 </ul>
 
-<h3>Node selection</h3>
+<h2>Node selection</h2>
 
 <p>Node selection is enabled by default in FWTreeView.
 Usually, it is not visible since the way to show it to the user might be different according to taste.
@@ -131,7 +131,7 @@ will have their `selected` attribute set as their parent because it behaves as t
 the nodes had always been there and, as such, they would have inherited the
 selected state from their parent.</p>
 
-<h3>Traversing the tree</h3>
+<h2>Traversing the tree</h2>
 
 <p>To reach all nodes in the tree, FWTreeView provides the `forSomeNodes` method
 which takes a function as its first argument.  This function will be called
@@ -147,7 +147,7 @@ have a better control of the traversal.</p>
 <p>These methods as well as `getNextSibling` and `getPreviousSibling` methods
 should be used with some caution as explained [[#pooled-nodes|later]].
 
-<h3>Dynamic Loading</h3>
+<h2>Dynamic Loading</h2>
 
 <p>For large trees it might be unwise to load all the data at once.
 Some trees have loops so it would never finish rendering them.
@@ -199,7 +199,7 @@ This tree will expand forever adding ever more and more dashes and digits to the
 This is the reason why the `expandAll` method or the numeric keypad `*` key
 will only expand existing nodes, it will not trigger any dynamic loading.
 
-<h3>Multiple node types</h3>
+<h2>Multiple node types</h2>
 
 <p>FWTreeView can handle nodes of various types in the same tree.
 All nodes must be FWTreeNode or a subclass derived from it.
@@ -294,7 +294,7 @@ using the `yui3-flyweight-tree-node-type-` prefix with the value of the `type`
 configuration attribute if it is a string, or the `NAME` property if `type`
 was an object reference.</p>
 
-<h3>Pooled nodes</h3>
+<h2>Pooled nodes</h2>
 
 <p>FWTreeView does not actually create a FWTreeNode instance per tree node,
 instead, it uses a pool of reusable instances.  To avoid memory losses the
@@ -323,7 +323,7 @@ repositioned.</p>
 are placed on hold.  FWTreeView cannot know when the reference is no longer needed
 so it is the responsibility of the developer to release those references when no longer needed.</p>
 
-<h3>Events</h3>
+<h2>Events</h2>
 
 <p>Since all DOM events eventually bubble up to the outermost container,
 it is best to subscribe to events on the FWTreeView instance than on individual nodes.
