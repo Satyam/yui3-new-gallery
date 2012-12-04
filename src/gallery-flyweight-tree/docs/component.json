@@ -1,8 +1,9 @@
 {
     "name"       : "gallery-flyweight-tree",
-    "displayName": "Gallery: flyweight-tree",
-    "description": "Extension to help visualize tree structures such as TreeView, Menu or even forms.",
-    "author"     : [ "satyam" ],
+    "displayName": "Gallery: gallery-flyweight-tree",
+    "description": "Abstract class to help visualize tree structures such as TreeView, Menu or even forms.",
+    "author"     : [ "Daniel Barreiro (a.k.a.: satyam)" ],
+    "use": [ "gallery-flyweight-tree" ],
 
     "tags": [ "gallery", "Flyweight pattern" ],
 
