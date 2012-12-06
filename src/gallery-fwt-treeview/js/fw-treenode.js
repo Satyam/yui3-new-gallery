@@ -20,7 +20,8 @@
                 this.after('click', this._afterClick),
                 this.after(SELECTED + CHANGE, this._afterSelectedChange),
                 this.after('spacebar', this.toggleSelection),
-                this.after(EXPANDED + CHANGE, this._afterExpandedChanged)
+                this.after(EXPANDED + CHANGE, this._afterExpandedChanged),
+                this.after('selectionEnabled' + CHANGE, this._afterSelectionEnabledChange)
             );
 		},
         /**
@@ -71,7 +72,8 @@
             if (el) {
                 el.setHTML(ev.newVal);
             }
-        },		/**
+        },
+		/**
 		 * Changes the UI to reflect the selected state and propagates the selection up and/or down.
 		 * @method _afterSelectedChange
 		 * @param ev {EventFacade} out of which
@@ -97,10 +99,27 @@
 				}
                 if (this.get('propagateDown') && ev.src !== 'propagatingUp') {
                     this.forSomeChildren(function(node) {
-                        node.set(SELECTED , selected, 'propagatingDown');
+                        node.set(SELECTED , selected, {src:'propagatingDown'});
                     });
                 }
 			}
+        },
+		/**
+		 * Changes the UI to reflect whether the item has selection enabled.
+		 * @method _afterSelectionEnabledChange
+		 * @param ev {EventFacade} Attribute event change facade
+		 * @private
+		 */
+        _afterSelectionEnabledChange: function (ev) {
+            var selected = this._iNode.selected,
+                el = Y.one('#' + this.get('id')),
+                prefix = FWTN.CNAMES.CNAME_SEL_PREFIX + '-';
+            if (ev.newVal) {
+                el.replaceClass(prefix + 'null', prefix + selected);
+            } else {
+                el.replaceClass(prefix + selected, prefix + 'null');
+            }
+
         },
         /**
          * Getter for the {{#crossLink "_aria_checked:attribute"}}{{/crossLink}}.
@@ -155,7 +174,7 @@
 			if (this.get('propagateDown')) {
 				var selected = this.get(SELECTED);
 				this.forSomeChildren(function(node) {
-					node.set(SELECTED , selected, 'propagatingDown');
+					node.set(SELECTED , selected, {src:'propagatingDown'});
 				});
 			}
             this._root._visibleSequence = null;
@@ -168,7 +187,7 @@
 		 * @private
 		 */
 		_childSelectedChange: function () {
-			var count = 0, selCount = 0, value;
+			var count = 0, selCount = 0, value, prevVal = this._iNode.selected;
 			this.forSomeChildren(function (node) {
 				count +=2;
 				selCount += node.get(SELECTED);
@@ -178,12 +197,12 @@
 			//this.set(SELECTED, (selCount === 0?NOT_SELECTED:(selCount === count?FULLY_SELECTED:PARTIALLY_SELECTED)), {src:'propagatingUp'});
             // This is the patch:
             value = (selCount === 0?NOT_SELECTED:(selCount === count?FULLY_SELECTED:PARTIALLY_SELECTED));
+            this._iNode.selected = value;
             this._afterSelectedChange({
-                prevVal: this._iNode.selected,
+                prevVal: prevVal,
                 newVal: value,
                 src: 'propagatingUp'
             });
-            this._iNode.selected = value;
             // end of the patch
 			return this;
 		}
