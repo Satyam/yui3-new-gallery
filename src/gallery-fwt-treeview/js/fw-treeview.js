@@ -126,6 +126,9 @@ FWTV = Y.Base.create(
                     fwNode.fire(which);
                     self._poolReturn(fwNode);
                 };
+            if(!iNode) {
+                return true;
+            }
 
             switch (key) {
                 case 38: // up
