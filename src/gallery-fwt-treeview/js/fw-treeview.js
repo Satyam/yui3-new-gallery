@@ -3,24 +3,24 @@
  * It creates the tree based on an object passed as the `tree` attribute in the constructor.
  * @example
  *
-	var tv = new Y.FWTreeView({tree: [
-		{
-			label:'label 0',
-			children: [
-				{
-					label: 'label 0-0',
-					children: [
-						{label: 'label 0-0-0'},
-						{label: 'label 0-0-1'}
-					]
-				},
-				{label: 'label 0-1'}
-			]
-		},
-		{label: 'label 1'}
+    var tv = new Y.FWTreeView({tree: [
+        {
+            label:'label 0',
+            children: [
+                {
+                    label: 'label 0-0',
+                    children: [
+                        {label: 'label 0-0-0'},
+                        {label: 'label 0-0-1'}
+                    ]
+                },
+                {label: 'label 0-1'}
+            ]
+        },
+        {label: 'label 1'}
 
-	]});
-	tv.render('#container');
+    ]});
+    tv.render('#container');
 
  *
  * @class FWTreeView
@@ -38,10 +38,10 @@
  * @param [config.tree.template] {String} Template for this particular node.
  */
 FWTV = Y.Base.create(
-	NAME,
-	Y.FlyweightTreeManager,
-	[],
-	{
+    NAME,
+    Y.FlyweightTreeManager,
+    [],
+    {
         /**
          * Array of iNodes containing a flat list of all nodes visible regardless
          * of their depth in the tree.
@@ -61,16 +61,16 @@ FWTV = Y.Base.create(
          * @private
          */
         _visibleIndex: null,
-		/**
-		 * Widget lifecycle method
-		 * @method initializer
-		 * @param config {object} configuration object of which
-		 * `tree` contains the tree configuration.
-		 */
-		initializer: function (config) {
-			this._domEvents = ['click'];
-			this._loadConfig(config.tree);
-		},
+        /**
+         * Widget lifecycle method
+         * @method initializer
+         * @param config {object} configuration object of which
+         * `tree` contains the tree configuration.
+         */
+        initializer: function (config) {
+            this._domEvents = ['click'];
+            this._loadConfig(config.tree);
+        },
         /**
          * Overrides the same function to process the selected attribute
          * @method _initNodes
@@ -81,22 +81,22 @@ FWTV = Y.Base.create(
             FWTV.superclass._initNodes.call(this, parentINode);
             parentINode.selected = parentINode.selected?FULLY_SELECTED:NOT_SELECTED;
         },
-		/**
-		 * Widget lifecyle method.
+        /**
+         * Widget lifecyle method.
          * Adds the `tree` role to the content box.
-		 * @method renderUI
-		 * @protected
-		 */
-		renderUI: function () {
+         * @method renderUI
+         * @protected
+         */
+        renderUI: function () {
             FWTV.superclass.renderUI.apply(this, arguments);
             this.get(CBX).set('role','tree');
-		},
-		/**
-		 * Widget lifecyle method.
+        },
+        /**
+         * Widget lifecyle method.
          * Sets the keydown listener to handle keyboard navigation.
-		 * @method bindUI
-		 * @protected
-		 */
+         * @method bindUI
+         * @protected
+         */
         bindUI: function () {
             FWTV.superclass.bindUI.apply(this, arguments);
             this._eventHandles.push(this.get(CBX).on('keydown', this._onKeyDown, this));
@@ -248,38 +248,38 @@ FWTV = Y.Base.create(
             return (this._visibleSequence = seq);
 
         },
-		/**
-		 * Overrides the default CONTENT_TEMPLATE to make it an unordered list instead of a div
-		 * @property CONTENT_TEMPLATE
-		 * @type String
-		 */
-		CONTENT_TEMPLATE: '<ul></ul>'
+        /**
+         * Overrides the default CONTENT_TEMPLATE to make it an unordered list instead of a div
+         * @property CONTENT_TEMPLATE
+         * @type String
+         */
+        CONTENT_TEMPLATE: '<ul></ul>'
 
-	},
-	{
-		ATTRS: {
-			/**
-			 * Override for the `defaultType` value of FlyweightTreeManager
-			 * so it creates FWTreeNode instances instead of the default.
-			 * @attribute defaultType
-			 * @type String
-			 * @default 'FWTreeNode'
-			 */
-			defaultType: {
-				value: 'FWTreeNode'
-			},
-			/**
-			 * Enables toggling by clicking on the label item instead of just the toggle icon.
-			 * @attribute toggleOnLabelClick
-			 * @type Boolean
-			 * @default false
-			 */
-			toggleOnLabelClick: {
-				value:false,
-				validator:Lang.isBoolean
-			}
-		}
-	}
+    },
+    {
+        ATTRS: {
+            /**
+             * Override for the `defaultType` value of FlyweightTreeManager
+             * so it creates FWTreeNode instances instead of the default.
+             * @attribute defaultType
+             * @type String
+             * @default 'FWTreeNode'
+             */
+            defaultType: {
+                value: 'FWTreeNode'
+            },
+            /**
+             * Enables toggling by clicking on the label item instead of just the toggle icon.
+             * @attribute toggleOnLabelClick
+             * @type Boolean
+             * @default false
+             */
+            toggleOnLabelClick: {
+                value:false,
+                validator:Lang.isBoolean
+            }
+        }
+    }
 );
 
 /**
