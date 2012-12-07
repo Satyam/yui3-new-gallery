@@ -59,7 +59,7 @@
          * @method toggleSelection
          */
         toggleSelection: function() {
-            this.set(SELECTED, (this.get(SELECTED)?NOT_SELECTED:FULLY_SELECTED));
+            this.set(SELECTED, (this._iNode.selected?NOT_SELECTED:FULLY_SELECTED));
         },
         /**
          * Responds to the change in the {{#crossLink "label:attribute"}}{{/crossLink}} attribute.
