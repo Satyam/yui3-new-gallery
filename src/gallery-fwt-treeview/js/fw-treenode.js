@@ -59,7 +59,7 @@
          * @method toggleSelection
          */
         toggleSelection: function() {
-            this.set(SELECTED, (this._iNode.selected?NOT_SELECTED:FULLY_SELECTED));
+            this.set(SELECTED, (this._iNode[SELECTED]?NOT_SELECTED:FULLY_SELECTED));
         },
         /**
          * Responds to the change in the {{#crossLink "label:attribute"}}{{/crossLink}} attribute.
@@ -68,7 +68,7 @@
          * @private
          */
         _afterLabelChange: function (ev) {
-            var el = Y.one('#' + this._iNode.id + ' .' + FWTN.CNAMES.CNAME_LABEL);
+            var el = Y.one(HASH + this._iNode.id + ' .' + FWTN.CNAMES.CNAME_LABEL);
             if (el) {
                 el.setHTML(ev.newVal);
             }
@@ -89,7 +89,7 @@
                 return;
             }
             if (!this.isRoot()) {
-                el = Y.one('#' + this.get('id'));
+                el = Y.one(HASH + this.get('id'));
                 if (el) {
                     el.replaceClass(prefix + ev.prevVal, prefix + selected);
                     el.set('aria-checked', this._ariaCheckedGetter());
@@ -111,8 +111,8 @@
          * @private
          */
         _afterSelectionEnabledChange: function (ev) {
-            var selected = this._iNode.selected,
-                el = Y.one('#' + this.get('id')),
+            var selected = this._iNode[SELECTED],
+                el = Y.one(HASH + this.get('id')),
                 prefix = FWTN.CNAMES.CNAME_SEL_PREFIX + '-';
             if (ev.newVal) {
                 el.replaceClass(prefix + 'null', prefix + selected);
@@ -187,7 +187,7 @@
          * @private
          */
         _childSelectedChange: function () {
-            var count = 0, selCount = 0, value, prevVal = this._iNode.selected;
+            var count = 0, selCount = 0, value, prevVal = this._iNode[SELECTED];
             this.forSomeChildren(function (node) {
                 count +=2;
                 selCount += node.get(SELECTED);
@@ -197,7 +197,7 @@
             //this.set(SELECTED, (selCount === 0?NOT_SELECTED:(selCount === count?FULLY_SELECTED:PARTIALLY_SELECTED)), {src:'propagatingUp'});
             // This is the patch:
             value = (selCount === 0?NOT_SELECTED:(selCount === count?FULLY_SELECTED:PARTIALLY_SELECTED));
-            this._iNode.selected = value;
+            this._iNode[SELECTED] = value;
             this._afterSelectedChange({
                 prevVal: prevVal,
                 newVal: value,

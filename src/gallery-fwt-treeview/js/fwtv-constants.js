@@ -29,6 +29,7 @@
 var Lang = Y.Lang,
     FWTV,
     FWTN,
+    HASH = '#',
 	getCName = Y.ClassNameManager.getClassName,
 	cName = function (name) {
 		return getCName('fw-treeview', name);

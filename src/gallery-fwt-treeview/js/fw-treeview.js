@@ -79,7 +79,7 @@ FWTV = Y.Base.create(
          */
         _initNodes: function (parentINode) {
             FWTV.superclass._initNodes.call(this, parentINode);
-            parentINode.selected = parentINode.selected?FULLY_SELECTED:NOT_SELECTED;
+            parentINode[SELECTED] = parentINode[SELECTED]?FULLY_SELECTED:NOT_SELECTED;
         },
         /**
          * Widget lifecyle method.
@@ -117,104 +117,102 @@ FWTV = Y.Base.create(
                 fireKey = function (which) {
                     fwNode = self._poolFetch(iNode);
                     ev.container = ev.target;
-                    ev.target = Y.one('#' + iNode.id);
-                    var newEv = {
+                    ev.target = Y.one(HASH + iNode.id);
+                    self.fire(which, {
                         domEvent:ev,
                         node: fwNode
-                    };
-                    self.fire(which, newEv);
+                    });
                     fwNode.fire(which);
-                    self._poolReturn(fwNode);
                 };
-            if(!iNode) {
-                return true;
-            }
+            if(iNode) {
 
-            switch (key) {
-                case 38: // up
-                    if (!seq) {
-                        seq = this._rebuildSequence();
-                        index = seq.indexOf(iNode);
-                    }
-                    index -=1;
-                    if (index >= 0) {
-                        iNode = seq[index];
-                        self._visibleIndex = index;
-                    } else {
-                        iNode = null;
-                    }
-                    break;
-                case 39: // right
-                    fwNode = self._poolFetch(iNode);
-                    if (fwNode.get(EXPANDED)) {
-                        if (iNode.children && iNode.children.length) {
-                            iNode = iNode.children[0];
+                switch (key) {
+                    case 38: // up
+                        if (!seq) {
+                            seq = this._rebuildSequence();
+                            index = seq.indexOf(iNode);
+                        }
+                        index -=1;
+                        if (index >= 0) {
+                            iNode = seq[index];
+                            self._visibleIndex = index;
                         } else {
                             iNode = null;
                         }
-                    } else {
-                        fwNode.set(EXPANDED, true);
-                        iNode = null;
-                    }
-                    self._poolReturn(fwNode);
-                    break;
-                case 40: // down
-                    if (!seq) {
-                        seq = self._rebuildSequence();
-                        index = seq.indexOf(iNode);
-                    }
-                    index +=1;
-                    if (index < seq.length) {
-                        iNode = seq[index];
-                        self._visibleIndex = index;
-                    } else {
-                        iNode = null;
-                    }
-                    break;
-                case 37: // left
-                    fwNode = self._poolFetch(iNode);
-                    if (fwNode.get(EXPANDED) && iNode.children) {
-                        fwNode.set(EXPANDED, false);
-                        iNode = null;
-                    } else {
-                        iNode = iNode._parent;
-                        if (iNode === self._tree) {
+                        break;
+                    case 39: // right
+                        fwNode = self._poolFetch(iNode);
+                        if (fwNode.get(EXPANDED)) {
+                            if (iNode.children && iNode.children.length) {
+                                iNode = iNode.children[0];
+                            } else {
+                                iNode = null;
+                            }
+                        } else {
+                            fwNode.set(EXPANDED, true);
                             iNode = null;
                         }
-                    }
-                    self._poolReturn(fwNode);
+                        break;
+                    case 40: // down
+                        if (!seq) {
+                            seq = self._rebuildSequence();
+                            index = seq.indexOf(iNode);
+                        }
+                        index +=1;
+                        if (index < seq.length) {
+                            iNode = seq[index];
+                            self._visibleIndex = index;
+                        } else {
+                            iNode = null;
+                        }
+                        break;
+                    case 37: // left
+                        fwNode = self._poolFetch(iNode);
+                        if (fwNode.get(EXPANDED) && iNode.children) {
+                            fwNode.set(EXPANDED, false);
+                            iNode = null;
+                        } else {
+                            iNode = iNode._parent;
+                            if (iNode === self._tree) {
+                                iNode = null;
+                            }
+                        }
 
-                    break;
-                case 36: // home
-                    iNode = self._tree.children && self._tree.children[0];
-                    break;
-                case 35: // end
-                    index = self._tree.children && self._tree.children.length;
-                    if (index) {
-                        iNode = self._tree.children[index -1];
-                    } else {
+                        break;
+                    case 36: // home
+                        iNode = self._tree.children && self._tree.children[0];
+                        break;
+                    case 35: // end
+                        index = self._tree.children && self._tree.children.length;
+                        if (index) {
+                            iNode = self._tree.children[index -1];
+                        } else {
+                            iNode = null;
+                        }
+                        break;
+                    case 13: // enter
+                        fireKey('enterkey');
                         iNode = null;
-                    }
-                    break;
-                case 13: // enter
-                    fireKey('enterkey');
-                    iNode = null;
-                    break;
-                case 32: // spacebar
-                    fireKey('spacebar');
-                    iNode = null;
-                    break;
-                case 106: // asterisk on the numeric keypad
-                    self.expandAll();
-                    break;
-                default: // initial
-                    iNode = null;
-                    break;
-            }
-            if (iNode) {
-                self._focusOnINode(iNode);
-                ev.halt();
-                return false;
+                        break;
+                    case 32: // spacebar
+                        fireKey('spacebar');
+                        iNode = null;
+                        break;
+                    case 106: // asterisk on the numeric keypad
+                        self.expandAll();
+                        break;
+                    default: // initial
+                        iNode = null;
+                        break;
+                }
+                if (fwNode) {
+                    self._poolReturn(fwNode);
+                }
+                if (iNode) {
+                    self._focusOnINode(iNode);
+                    ev.halt();
+                    return false;
+                }
             }
             return true;
         },
