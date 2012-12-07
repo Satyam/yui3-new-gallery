@@ -157,14 +157,14 @@ FWMgr = Y.Base.create(
                 self._initNodes(iNode);
             });
         },
-		/**
-		 * Widget lifecyle method.
+        /**
+         * Widget lifecyle method.
          *
          * Gets the HTML markup for the visible nodes and inserts it into the contentbox.
-		 * @method renderUI
-		 * @protected
-		 */
-		renderUI: function () {
+         * @method renderUI
+         * @protected
+         */
+        renderUI: function () {
             var root = this.getRoot();
             root._renderChildren(this.get(CBX));
             root.release();
@@ -442,9 +442,9 @@ FWMgr = Y.Base.create(
          * If the function returns true, the traversing will terminate.
          * @method _forSomeINode
          * @param fn {Function} Function to call on each configuration iNode
-         *		@param fn.iNode {Object} iNode in the configuration tree
-         *		@param fn.depth {Integer} depth of this iNode within the tree
-         *		@param fn.index {Integer} index of this iNode within the array of its siblings
+         *        @param fn.iNode {Object} iNode in the configuration tree
+         *        @param fn.depth {Integer} depth of this iNode within the tree
+         *        @param fn.index {Integer} index of this iNode within the array of its siblings
          * @param scope {Object} scope to run the function in, defaults to `this`.
          * @return true if any of the function calls returned true (the traversal was terminated earlier)
          * @protected
@@ -466,9 +466,9 @@ FWMgr = Y.Base.create(
          * If dynamic loading is enabled, it will not run over nodes not yet loaded.
          * @method forSomeNodes
          * @param fn {function} function to execute on each node.  It will receive:
-         *	@param fn.node {FlyweightTreeNode} node being visited.
-         *	@param fn.depth {Integer} depth from the root. The root node is level zero and it is not traversed.
-         *	@param fn.index {Integer} position of this node within its branch
+         *    @param fn.node {FlyweightTreeNode} node being visited.
+         *    @param fn.depth {Integer} depth from the root. The root node is level zero and it is not traversed.
+         *    @param fn.index {Integer} position of this node within its branch
          * @param scope {Object} Scope to run the function in.  Defaults to the FlyweightTreeManager instance.
          * @return {Boolean} true if any function calls returned true (the traversal was interrupted)
          */

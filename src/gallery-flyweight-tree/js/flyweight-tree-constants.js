@@ -33,13 +33,13 @@
 'use strict';
 /*jslint white: true */
 var Lang = Y.Lang,
-	YArray = Y.Array,
+    YArray = Y.Array,
 
     DOT = '.',
     HASH = '#',
-	BYPASS_PROXY = "_bypassProxy",
-	CBX = 'contentBox',
-	VALUE = 'value',
+    BYPASS_PROXY = "_bypassProxy",
+    CBX = 'contentBox',
+    VALUE = 'value',
     EXPANDED = 'expanded',
     DYNAMIC_LOADER = 'dynamicLoader',
     TABINDEX = 'tabIndex',
@@ -49,10 +49,10 @@ var Lang = Y.Lang,
 
     getCName = Y.ClassNameManager.getClassName,
     FWNODE_NAME = 'flyweight-tree-node',
-	cName = function (name) {
-		return getCName(FWNODE_NAME, name);
-	},
+    cName = function (name) {
+        return getCName(FWNODE_NAME, name);
+    },
 
-	FWMgr,
-	FWNode;
+    FWMgr,
+    FWNode;
 
