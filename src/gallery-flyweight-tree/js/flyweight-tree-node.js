@@ -197,7 +197,12 @@ FWNode = Y.Base.create(
 		 * @protected
 		 */
 		_expandedGetter: function (value) {
-			return value === undefined?this._iNode[EXPANDED] !== false:value;
+            var iNode = this._iNode;
+            if (!!this._root.get(DYNAMIC_LOADER) && !iNode.children) {
+                return !!iNode.isLeaf;
+            } else {
+                return (value === undefined) || !!value;
+            }
 		},
 		/**
 		 * Responds to the change in the {{#crossLink "expanded:attribute"}}{{/crossLink}} attribute.
@@ -218,7 +223,6 @@ FWNode = Y.Base.create(
                 CEXP = FWNode.CNAMES.CNAME_EXPANDED,
                 CCOLL = FWNode.CNAMES.CNAME_COLLAPSED;
 
-			iNode[EXPANDED] = value;
 			if (dynLoader && !iNode.isLeaf && (!iNode.children  || !iNode.children.length)) {
 				this._loadDynamic();
 				return;

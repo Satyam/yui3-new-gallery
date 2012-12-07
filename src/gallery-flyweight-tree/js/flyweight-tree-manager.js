@@ -138,8 +138,7 @@ FWMgr = Y.Base.create(
          * @protected
          */
         _initNodes: function (parentINode) {
-            var self = this,
-                dynLoad = !!self.get(DYNAMIC_LOADER);
+            var self = this;
             YArray.each(parentINode.children, function (iNode, i) {
                 if (Lang.isString(iNode)) {
                     iNode = {label: iNode};
@@ -150,11 +149,7 @@ FWMgr = Y.Base.create(
                 }
                 iNode._parent = parentINode;
                 iNode.id = iNode.id || Y.guid();
-                if (dynLoad && !iNode.children) {
-                    iNode[EXPANDED] = !!iNode.isLeaf;
-                } else {
-                    iNode[EXPANDED] = (iNode[EXPANDED] === undefined) || !!iNode[EXPANDED];
-                }
+
                 self._initNodes(iNode);
             });
         },
@@ -220,10 +215,8 @@ FWMgr = Y.Base.create(
          * @chainable
          */
         expandAll: function () {
-            this._forSomeINode(function(iNode) {
-                if (iNode.children && !iNode[EXPANDED]) {
-                    this._poolReturn(this._poolFetch(iNode).set(EXPANDED, true));
-                }
+            this.forSomeNodes(function(node) {
+                node.set(EXPANDED, true);
             });
         },
         /**
@@ -233,10 +226,8 @@ FWMgr = Y.Base.create(
          * @chainable
          */
         collapseAll: function () {
-            this._forSomeINode(function(iNode) {
-                if (iNode.children && iNode[EXPANDED]) {
-                    this._poolReturn(this._poolFetch(iNode).set(EXPANDED, false));
-                }
+            this.forSomeNodes(function(node) {
+                node.set(EXPANDED, false);
             });
         },
         /**
@@ -565,13 +556,6 @@ FWMgr = Y.Base.create(
         _dynamicLoaderSetter: function (value) {
             if (!Lang.isFunction(value) &&  value !== null) {
                 return Y.Attribute.INVALID_VALUE;
-            }
-            if (value) {
-                this._forSomeINode(function(iNode) {
-                    if (!iNode.children) {
-                        iNode[EXPANDED] = !!iNode.isLeaf;
-                    }
-                });
             }
             return value;
         }
