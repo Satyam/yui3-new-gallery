@@ -151,9 +151,9 @@ FWMgr = Y.Base.create(
                 iNode._parent = parentINode;
                 iNode.id = iNode.id || Y.guid();
                 if (dynLoad && !iNode.children) {
-                    iNode.expanded = !!iNode.isLeaf;
+                    iNode[EXPANDED] = !!iNode.isLeaf;
                 } else {
-                    iNode.expanded = (iNode.expanded === undefined) || !!iNode.expanded;
+                    iNode[EXPANDED] = (iNode[EXPANDED] === undefined) || !!iNode[EXPANDED];
                 }
                 self._initNodes(iNode);
             });
@@ -221,7 +221,7 @@ FWMgr = Y.Base.create(
          */
         expandAll: function () {
             this._forSomeINode(function(iNode) {
-                if (iNode.children && !iNode.expanded) {
+                if (iNode.children && !iNode[EXPANDED]) {
                     this._poolReturn(this._poolFetch(iNode).set(EXPANDED, true));
                 }
             });
@@ -234,7 +234,7 @@ FWMgr = Y.Base.create(
          */
         collapseAll: function () {
             this._forSomeINode(function(iNode) {
-                if (iNode.children && iNode.expanded) {
+                if (iNode.children && iNode[EXPANDED]) {
                     this._poolReturn(this._poolFetch(iNode).set(EXPANDED, false));
                 }
             });
@@ -532,19 +532,19 @@ FWMgr = Y.Base.create(
                     iNode = iNode._parent;
                     if (iNode && iNode._parent) {
                         expand(iNode);
-                        self._poolReturn(self._poolFetch(iNode).set('expanded', true));
+                        self._poolReturn(self._poolFetch(iNode).set(EXPANDED, true));
                     }
                 };
 
             if (iNode && iNode !== prevINode) {
 
-                el = Y.one('#' + prevINode.id + ' .' + FWNode.CNAMES.CNAME_CONTENT);
+                el = Y.one(HASH + prevINode.id + ' .' + FWNode.CNAMES.CNAME_CONTENT);
                 el.blur();
                 el.set(TABINDEX, -1);
 
                 expand(iNode);
 
-                el = Y.one('#' + iNode.id + ' .' + FWNode.CNAMES.CNAME_CONTENT);
+                el = Y.one(HASH + iNode.id + ' .' + FWNode.CNAMES.CNAME_CONTENT);
                 el.focus();
                 el.set(TABINDEX,0);
 
@@ -569,7 +569,7 @@ FWMgr = Y.Base.create(
             if (value) {
                 this._forSomeINode(function(iNode) {
                     if (!iNode.children) {
-                        iNode.expanded = !!iNode.isLeaf;
+                        iNode[EXPANDED] = !!iNode.isLeaf;
                     }
                 });
             }

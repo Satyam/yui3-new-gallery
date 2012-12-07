@@ -97,7 +97,7 @@ FWNode = Y.Base.create(
             Y.mix(attrs, CNAMES);
 			iNode._rendered = true;
 			if (childCount) {
-				if (attrs.expanded) {
+				if (attrs[EXPANDED]) {
 					iNode._childrenRendered = true;
 					this.forSomeChildren( function (fwNode, index, array) {
 						s += fwNode._getHTML(index, array.length, depth + 1);
@@ -181,7 +181,7 @@ FWNode = Y.Base.create(
 		 * @private
 		 */
         _afterLabelChange: function (ev) {
-            var el = Y.one('#' + this._iNode.id + ' .' + FWNode.CNAMES.CNAME_CONTENT);
+            var el = Y.one(HASH + this._iNode.id + ' .' + FWNode.CNAMES.CNAME_CONTENT);
             if (el) {
                 el.setHTML(ev.newVal);
             }
@@ -196,8 +196,8 @@ FWNode = Y.Base.create(
 		 * @return {Boolean} The expanded state of the node.
 		 * @protected
 		 */
-		_expandedGetter: function () {
-			return this._iNode.expanded !== false;
+		_expandedGetter: function (value) {
+			return value === undefined?this._iNode[EXPANDED] !== false:value;
 		},
 		/**
 		 * Responds to the change in the {{#crossLink "expanded:attribute"}}{{/crossLink}} attribute.
@@ -213,12 +213,12 @@ FWNode = Y.Base.create(
                 self = this,
 				iNode = self._iNode,
 				root = self._root,
-				el = Y.one('#' + iNode.id),
+				el = Y.one(HASH + iNode.id),
 				dynLoader = root.get(DYNAMIC_LOADER),
                 CEXP = FWNode.CNAMES.CNAME_EXPANDED,
                 CCOLL = FWNode.CNAMES.CNAME_COLLAPSED;
 
-			iNode.expanded = value;
+			iNode[EXPANDED] = value;
 			if (dynLoader && !iNode.isLeaf && (!iNode.children  || !iNode.children.length)) {
 				this._loadDynamic();
 				return;
@@ -245,7 +245,7 @@ FWNode = Y.Base.create(
 		_loadDynamic: function () {
 			var self = this,
 				root = self._root;
-			Y.one('#' + this.get('id')).replaceClass(FWNode.CNAMES.CNAME_COLLAPSED, FWNode.CNAMES.CNAME_LOADING);
+			Y.one(HASH + this.get('id')).replaceClass(FWNode.CNAMES.CNAME_COLLAPSED, FWNode.CNAMES.CNAME_LOADING);
 			root.get(DYNAMIC_LOADER).call(root, self, Y.bind(self._dynamicLoadReturn, self));
 
 		},
@@ -270,7 +270,7 @@ FWNode = Y.Base.create(
 				iNode.isLeaf = true;
 			}
 			// isLeaf might have been set in the response, not just in the line above.
-			Y.one('#' + iNode.id).replaceClass(CNAMES.CNAME_LOADING, (iNode.isLeaf?CNAMES.CNAME_NOCHILDREN:CNAMES.CNAME_EXPANDED));
+			Y.one(HASH + iNode.id).replaceClass(CNAMES.CNAME_LOADING, (iNode.isLeaf?CNAMES.CNAME_NOCHILDREN:CNAMES.CNAME_EXPANDED));
 		},
 		/**
 		 * Renders the children of this node.
@@ -288,7 +288,7 @@ FWNode = Y.Base.create(
 			this.forSomeChildren(function (fwNode, index, array) {
 				s += fwNode._getHTML(index, array.length, depth + 1);
 			});
-            el = el || Y.one('#' + iNode.id + ' .' + FWNode.CNAMES.CNAME_CHILDREN);
+            el = el || Y.one(HASH + iNode.id + ' .' + FWNode.CNAMES.CNAME_CHILDREN);
             el.setHTML(s);
 		},
 		/**

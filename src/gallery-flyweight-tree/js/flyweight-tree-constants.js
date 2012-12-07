@@ -36,6 +36,7 @@ var Lang = Y.Lang,
 	YArray = Y.Array,
 
     DOT = '.',
+    HASH = '#',
 	BYPASS_PROXY = "_bypassProxy",
 	CBX = 'contentBox',
 	VALUE = 'value',
