@@ -249,14 +249,17 @@ FWMgr = Y.Base.create(
          */
         getNodeBy: function (attr, value) {
             var fn, found = null;
-            if (Lang.isFunction(attr)) {
-                fn = attr;
-            } else if (Lang.isString(attr)) {
-                fn = function (node) {
-                    return node.get(attr) === value;
-                };
-            } else {
-                return null;
+            switch (Lang.type(attr)) {
+                case 'function':
+                    fn = attr;
+                    break;
+                case 'string':
+                    fn = function (node) {
+                        return node.get(attr) === value;
+                    };
+                    break;
+                default:
+                    return null;
             }
             this.forSomeNodes(function (node) {
                 if (fn(node)) {
