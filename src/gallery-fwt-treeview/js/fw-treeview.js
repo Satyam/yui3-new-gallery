@@ -145,17 +145,18 @@ FWTV = Y.Base.create(
                     }
                     break;
                 case 39: // right
-                    if (iNode.expanded) {
+                    fwNode = self._poolFetch(iNode);
+                    if (fwNode.get(EXPANDED)) {
                         if (iNode.children && iNode.children.length) {
                             iNode = iNode.children[0];
                         } else {
                             iNode = null;
                         }
                     } else {
-                        self._poolReturn(self._poolFetch(iNode).set(EXPANDED, true));
+                        fwNode.set(EXPANDED, true);
                         iNode = null;
                     }
-
+                    self._poolReturn(fwNode);
                     break;
                 case 40: // down
                     if (!seq) {
@@ -171,8 +172,9 @@ FWTV = Y.Base.create(
                     }
                     break;
                 case 37: // left
-                    if (iNode.expanded && iNode.children) {
-                        self._poolReturn(self._poolFetch(iNode).set(EXPANDED, false));
+                    fwNode = self._poolFetch(iNode);
+                    if (fwNode.get(EXPANDED) && iNode.children) {
+                        fwNode.set(EXPANDED, false);
                         iNode = null;
                     } else {
                         iNode = iNode._parent;
@@ -180,6 +182,7 @@ FWTV = Y.Base.create(
                             iNode = null;
                         }
                     }
+                    self._poolReturn(fwNode);
 
                     break;
                 case 36: // home
@@ -236,15 +239,17 @@ FWTV = Y.Base.create(
          */
         _rebuildSequence: function () {
             var seq = [],
-                loop = function(iNode) {
-                    YArray.each(iNode.children || [], function(childINode) {
-                        seq.push(childINode);
-                        if (childINode.expanded) {
-                            loop(childINode);
-                        }
-                    });
+                root = this.getRoot(),
+                forOneLevel = function (fwNode) {
+                    if (fwNode.get(EXPANDED)) {
+                        fwNode.forSomeChildren(function (fwNode) {
+                            seq.push(fwNode._iNode);
+                            forOneLevel(fwNode);
+                        });
+                    }
                 };
-            loop(this._tree);
+            forOneLevel(root);
+            root.release();
             return (this._visibleSequence = seq);
 
         },

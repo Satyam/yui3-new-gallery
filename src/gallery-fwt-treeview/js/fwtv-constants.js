@@ -27,7 +27,6 @@
 'use strict';
 /*jslint white: true */
 var Lang = Y.Lang,
-	YArray = Y.Array,
     FWTV,
     FWTN,
 	getCName = Y.ClassNameManager.getClassName,
