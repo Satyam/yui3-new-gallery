@@ -60,7 +60,7 @@ YUI.add('fw-tree-tests', function(Y) {
                 A.isNull(iNode._nodeInstance ||  null, 'all tree should have no nodes held: ' + iNode.label);
             });
             tv.expandAll();
-            A.areEqual(2, tv._pool._default.length,'The tree is fully expanded, 1 for the node being expanded, one for the children');
+            A.areEqual(5, tv._pool._default.length,'The tree is fully expanded, 1 for the root + 1 for each level of depth');
             Y.Array.each(tv._pool._default, function (node) {
                 A.isNull(node._iNode, 'instances in pool should have iNode: null');
             });
@@ -116,6 +116,25 @@ YUI.add('fw-tree-tests', function(Y) {
             node.release();
             tv.destroy();
         },
+        'Test dynamic Loader returns nothing': function () {
+            var node, tv = new TV({
+                tree: [
+                    'label-0',
+                    'label-1',
+                    'label-2'
+                ],
+                dynamicLoader: function (node, callback) {
+                    callback();
+                }
+            });
+            tv.render();
+            node = tv.getNodeBy(LABEL,'label-1');
+            A.isUndefined(node.get('isLeaf'), 'after loading nothing, isLeaf should be unknown');
+            node.expand();
+            A.isTrue(node.get('isLeaf'), 'after loading nothing, isLeaf should be True');
+            node.release();
+            tv.destroy();
+         },
         'Test focused node gets expanded': function () {
 
             var tv = buildTree(3,4, false);
@@ -157,6 +176,20 @@ YUI.add('fw-tree-tests', function(Y) {
                 other = tv.getNodeBy(LABEL, 'label-1');
 
             A.areSame(node, other, 'Node references should be the same');
+            node.release();
+            other.release();
+            tv.destroy();
+        },
+        'Trying alternate ways to use getNodeBy': function () {
+            var tv = buildTree(2,2),
+                node = tv.getNodeBy(LABEL, 'label-1'),
+                other = tv.getNodeBy(function(node) {
+                    return node.get(LABEL) === 'label-1';
+                });
+
+            A.areSame(node, other, 'Node references should be the same');
+            A.isNull(tv.getNodeBy(LABEL, 'qqqq'), 'node not found, should be null')
+            A.isNull(tv.getNodeBy(1), 'bad argument, should be null')
             node.release();
             other.release();
             tv.destroy();
@@ -273,8 +306,56 @@ YUI.add('fw-tree-tests', function(Y) {
             A.areEqual(1, tv._pool._default.length,'There should be 1 default');
 
             tv.destroy();
+        },
+        'Test _domEvents': function () {
+            var worked = false,
+                TN = Y.Base.create(
+                    'test-node',
+                    Y.FlyweightTreeNode,
+                    [],
+                    {
+                        initializer: function () {
+                            this._root._domEvents = ['click'];
+                            this._handle = this.after('click', this._afterClick);
+                        },
+                        destructor: function () {
+                            this._handle.detach();
+                        },
+                        _afterClick: function (ev) {
+                            A.isFalse(worked, 'after click should be called only once');
+                            worked = true;
+                            A.areEqual('click', ev.domEvent.type, 'event type should be click');
+                            A.areSame(el, ev.domEvent.target, 'target should be the element?');
+                            A.areSame(this, ev.target, 'The target should be this same node');
+                        }
+                    }
+                ),
+                tv = new TV({
+                    tree: [
+                        'label-0',
+                        'label-1'
+                    ],
+                    defaultType:TN
+                }),
+                el;
+            tv.render('#container');
+            el  = Y.one('.' + Y.FlyweightTreeNode.CNAMES.CNAME_CONTENT);
+            el.simulate('click');
+            A.isTrue(worked, 'event should have been fired');
+            el = tv.get('contentBox');
+            el.simulate('click')
+            tv.destroy();
+        },
+        'change label': function () {
+            var tv = buildTree(2,2),
+                node = tv.getNodeBy(LABEL, 'label-1-1'),
+                el = Y.one('#' + node.get('id') + ' .' + Y.FlyweightTreeNode.CNAMES.CNAME_CONTENT);
+            A.areEqual(el.getHTML(), node.get(LABEL), 'check the label is in place');
+            node.set(LABEL, 'whatever');
+            A.areEqual('whatever', el.getHTML(), 'check the label has changed');
+            tv.destroy();
         }
     }));
-	Y.Test.Runner.add(suite);
+    Y.Test.Runner.add(suite);
 
 },'', { requires: ['gallery-flyweight-tree', 'test', 'base-build', 'node-event-simulate' ] });
