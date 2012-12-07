@@ -1,8 +1,10 @@
 {
     "gallery-button-plugin": {
-        "requires": [
-            "node",
+        "optional": [
             "cssbutton"
+        ],
+        "requires": [
+            "node"
         ]
     },
     "gallery-flyweight-tree": {

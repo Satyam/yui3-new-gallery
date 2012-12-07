@@ -7,9 +7,11 @@
  */
 YUI.Env[Y.version].modules = YUI.Env[Y.version].modules || {
     "gallery-button-plugin": {
-        "requires": [
-            "node",
+        "optional": [
             "cssbutton"
+        ],
+        "requires": [
+            "node"
         ]
     },
     "gallery-flyweight-tree": {
@@ -145,4 +147,4 @@ YUI.Env[Y.version].modules = YUI.Env[Y.version].modules || {
         "skinnable": true
     }
 };
-YUI.Env[Y.version].md5 = '3263e396e5c07d654a13fc213ed8cc71';
+YUI.Env[Y.version].md5 = 'a67a0ee1b886eb34ef7fd9cd85bf291c';
