@@ -93,8 +93,12 @@ FWMgr = Y.Base.create(
          * @protected
          */
         destructor: function () {
-            YArray.each(this._pool, function (fwNode) {
-                fwNode.destroy();
+            var pool = this._pool;
+            Y.Object.each(pool, function (value, key) {
+                YArray.each(value, function (fwNode) {
+                    fwNode.destroy();
+                });
+                delete pool[key];
             });
             this._pool = null;
             YArray.each(this._eventHandles, function (evHandle) {
