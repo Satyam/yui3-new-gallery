@@ -45,7 +45,7 @@ var Lang = Y.Lang,
     EXPANDED = 'expanded',
     DYNAMIC_LOADER = 'dynamicLoader',
     TABINDEX = 'tabIndex',
-    FOCUSED = 'focused',
+    FOCUSED = 'focusedNode',
 
     DEFAULT_POOL = '_default',
 
@@ -265,7 +265,9 @@ FWMgr = Y.Base.create(
             if (ev && ev.domEvent) {
                 ev.node = self._poolFetchFromEvent(ev);
                 ret = FWMgr.superclass.fire.call(self, type, ev);
-                self._poolReturn(ev.node);
+                if (ev.node) {
+                    self._poolReturn(ev.node);
+                }
                 return ret;
             }
             return FWMgr.superclass.fire.apply(self, arguments);
@@ -358,12 +360,15 @@ FWMgr = Y.Base.create(
             if (!type) {
                 return DEFAULT_POOL;
             }
-            if (Lang.isString(type)) {
+            if (typeof type === 'string') {
+                if (!Y[type]) {
+                    throw new TypeError('Missing node class: Y.' + type );
+                }
                 type = Y[type];
             }
             type = type.NAME;
             if (!type) {
-                throw "Node contains unknown type";
+                throw new TypeError("Node contains unknown type");
             }
             return type;
         },
@@ -469,7 +474,7 @@ FWMgr = Y.Base.create(
          * @protected
          */
         _findINodeByElement: function(el) {
-            var id = el.ancestor(DOT + FWNode.CNAMES.CNAME_NODE, true).get('id'),
+            var id,
                 found = null,
                 scan = function (iNode) {
                     if (iNode.id === id) {
@@ -481,8 +486,13 @@ FWMgr = Y.Base.create(
                     }
                     return false;
                 };
-            if (scan(this._tree)) {
-                return found;
+            el = el.ancestor(DOT + FWNode.CNAMES.CNAME_NODE, true);
+            if (el) {
+                id = el.get('id');
+
+                if (scan(this._tree)) {
+                    return found;
+                }
             }
             return null;
         },
@@ -1027,7 +1037,7 @@ FWNode = Y.Base.create(
          */
         getNextSibling: function() {
             var parent = this._iNode._parent,
-                siblings = (parent && parent.children) || [],
+                siblings = (parent && parent.children),
                 index = siblings.indexOf(this._iNode) + 1;
             if (index === 0 || index >= siblings.length) {
                 return null;
@@ -1043,7 +1053,7 @@ FWNode = Y.Base.create(
          */
         getPreviousSibling: function() {
             var parent = this._iNode._parent,
-                siblings = (parent && parent.children) || [],
+                siblings = (parent && parent.children),
                 index = siblings.indexOf(this._iNode) - 1;
             if (index < 0) {
                 return null;
@@ -1097,25 +1107,6 @@ FWNode = Y.Base.create(
          */
         isRoot: function() {
             return this._root._tree === this._iNode;
-        },
-        /**
-        * Gets the stored value for the attribute, from either the
-        * internal state object, or the state proxy if it exits
-        *
-        * @method _getStateVal
-        * @private
-        * @param {String} name The name of the attribute
-        * @return {Any} The stored value of the attribute
-        */
-        _getStateVal : function(name) {
-            var iNode = this._iNode;
-            if (this._state.get(name, BYPASS_PROXY) || !iNode) {
-                return this._state.get(name, VALUE);
-            }
-            if (iNode.hasOwnProperty(name)) {
-                return iNode[name];
-            }
-            return this._state.get(name, VALUE);
         },
 
         /**
@@ -1284,7 +1275,7 @@ FWNode = Y.Base.create(
              */
             id: {
                 validator: function () {
-                    return !this.get('rendered');
+                    return !this._root.get('rendered');
                 }
             },
             /**
