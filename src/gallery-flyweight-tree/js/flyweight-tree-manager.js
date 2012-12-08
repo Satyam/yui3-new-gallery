@@ -300,7 +300,10 @@ FWMgr = Y.Base.create(
             if (!type) {
                 return DEFAULT_POOL;
             }
-            if (Lang.isString(type)) {
+            if (typeof type === 'string') {
+                if (!Y[type]) {
+                    throw new TypeError('Missing node class: Y.' + type );
+                }
                 type = Y[type];
             }
             type = type.NAME;

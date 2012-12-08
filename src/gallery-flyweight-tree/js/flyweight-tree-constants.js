@@ -43,7 +43,7 @@ var Lang = Y.Lang,
     EXPANDED = 'expanded',
     DYNAMIC_LOADER = 'dynamicLoader',
     TABINDEX = 'tabIndex',
-    FOCUSED = 'focused',
+    FOCUSED = 'focusedNode',
 
     DEFAULT_POOL = '_default',
 
