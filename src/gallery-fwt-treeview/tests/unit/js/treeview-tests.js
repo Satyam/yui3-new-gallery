@@ -394,14 +394,14 @@ YUI.add('treeview-tests', function(Y) {
             selected(false,28);
             test(32, '1-2',29); // space bar
             selected(2,29);
-            test(39, '1-2-0',30);
+            test(39, '1-2-0',30); // right
             selected(2,30);
             test(38, '1-2',31); //up
-            test(37, '1-2',32); // up
-            test(37, '1',32); // up
-            selected(1,32);
-            test(38,'0-2-2',33);
-            selected(0,33);
+            test(37, '1-2',32); // left
+            test(37, '1',33); // left
+            selected(1,33);
+            test(38,'0-2-2',34);
+            selected(0,35);
 
             tv.after('enterkey', function (ev) {
                 A.areEqual('label-0-2-2', ev.node.get(LABEL), 'Label on enter');
