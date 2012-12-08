@@ -340,7 +340,7 @@ FWNode = Y.Base.create(
          */
         getNextSibling: function() {
             var parent = this._iNode._parent,
-                siblings = (parent && parent.children) || [],
+                siblings = (parent && parent.children),
                 index = siblings.indexOf(this._iNode) + 1;
             if (index === 0 || index >= siblings.length) {
                 return null;
@@ -356,7 +356,7 @@ FWNode = Y.Base.create(
          */
         getPreviousSibling: function() {
             var parent = this._iNode._parent,
-                siblings = (parent && parent.children) || [],
+                siblings = (parent && parent.children),
                 index = siblings.indexOf(this._iNode) - 1;
             if (index < 0) {
                 return null;
@@ -578,7 +578,7 @@ FWNode = Y.Base.create(
              */
             id: {
                 validator: function () {
-                    return !this.get('rendered');
+                    return !this._root.get('rendered');
                 }
             },
             /**
