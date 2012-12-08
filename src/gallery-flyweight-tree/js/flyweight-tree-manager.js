@@ -205,7 +205,9 @@ FWMgr = Y.Base.create(
             if (ev && ev.domEvent) {
                 ev.node = self._poolFetchFromEvent(ev);
                 ret = FWMgr.superclass.fire.call(self, type, ev);
-                self._poolReturn(ev.node);
+                if (ev.node) {
+                    self._poolReturn(ev.node);
+                }
                 return ret;
             }
             return FWMgr.superclass.fire.apply(self, arguments);
@@ -303,7 +305,7 @@ FWMgr = Y.Base.create(
             }
             type = type.NAME;
             if (!type) {
-                throw "Node contains unknown type";
+                throw new TypeError("Node contains unknown type");
             }
             return type;
         },
@@ -409,7 +411,7 @@ FWMgr = Y.Base.create(
          * @protected
          */
         _findINodeByElement: function(el) {
-            var id = el.ancestor(DOT + FWNode.CNAMES.CNAME_NODE, true).get('id'),
+            var id,
                 found = null,
                 scan = function (iNode) {
                     if (iNode.id === id) {
@@ -421,8 +423,13 @@ FWMgr = Y.Base.create(
                     }
                     return false;
                 };
-            if (scan(this._tree)) {
-                return found;
+            el = el.ancestor(DOT + FWNode.CNAMES.CNAME_NODE, true);
+            if (el) {
+                id = el.get('id');
+
+                if (scan(this._tree)) {
+                    return found;
+                }
             }
             return null;
         },

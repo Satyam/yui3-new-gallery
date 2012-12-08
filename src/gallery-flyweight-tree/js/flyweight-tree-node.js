@@ -411,25 +411,6 @@ FWNode = Y.Base.create(
         isRoot: function() {
             return this._root._tree === this._iNode;
         },
-        /**
-        * Gets the stored value for the attribute, from either the
-        * internal state object, or the state proxy if it exits
-        *
-        * @method _getStateVal
-        * @private
-        * @param {String} name The name of the attribute
-        * @return {Any} The stored value of the attribute
-        */
-        _getStateVal : function(name) {
-            var iNode = this._iNode;
-            if (this._state.get(name, BYPASS_PROXY) || !iNode) {
-                return this._state.get(name, VALUE);
-            }
-            if (iNode.hasOwnProperty(name)) {
-                return iNode[name];
-            }
-            return this._state.get(name, VALUE);
-        },
 
         /**
         * Sets the stored value for the attribute, in either the
