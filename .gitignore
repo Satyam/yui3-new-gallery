@@ -1,13 +1,5 @@
-/nbproject/
-/src/gallery-fwt-treeview/nbproject/
+/build/
+/YUI_config.js
+nbproject/
+build.xml
 /src/gallery-fwt-treeview/img/
-/src/gallery-fwt-treeview/build.xml
-/src/gallery-flyweight-tree/nbproject/
-/src/gallery-flyweight-tree/build.xml
-/src/gallery-button-plugin/nbproject/
-/src/gallery-button-plugin/build.xml
-/src/gallery-fwt-menu/nbproject/
-/src/gallery-fwt-treeview/nbproject/
-/src/gallery-timeline/nbproject/
-/src/gallery-button-plugin/nbproject/
-/src/gallery-makenode/nbproject/
