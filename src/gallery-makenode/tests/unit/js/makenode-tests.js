@@ -62,6 +62,20 @@ YUI.add('makenode-tests', function(Y) {	Y.Test.Runner.add(suite);
             mn.render(testNode);
             A.areEqual('===3.14,,true,false,this is a \"test\"===',mn.get(CBX).getContent());
         },
+        testUnquotedString: function () {
+            MN._TEMPLATE = '==={m method 3.14 null true false this is a "test"}===';
+            mn = new MN();
+            mn.method = function (pi, n, t, f, s) {
+                A.isNumber(pi);
+                A.isNull(n);
+                A.isTrue(t);
+                A.isFalse(f);
+                A.isString(s);
+                return Y.Array(arguments).join(',');
+            };
+            mn.render(testNode);
+            A.areEqual('===3.14,,true,false,test===',mn.get(CBX).getContent());
+        },
         testAt : function () {
             MN._TEMPLATE = '==={@ value}===';
             MN.ATTRS = {
@@ -170,8 +184,13 @@ YUI.add('makenode-tests', function(Y) {	Y.Test.Runner.add(suite);
 
     suite.add(new Y.Test.Case({
         name: "tests _classNames and _locateNodes",
-        setUp : function () {
-            MN = Y.Base.create(
+        tearDown : function () {
+            mn.destroy();
+            testNode.setContent('');
+            MN = mn = null;
+        },
+        testNodesGetTheirClasses : function () {
+            MN = new Y.Base.create(
                 'MakeNodeTest',
                 Y.Widget,
                 [Y.MakeNode],
@@ -183,24 +202,74 @@ YUI.add('makenode-tests', function(Y) {	Y.Test.Runner.add(suite);
                     value: 5
                 },
                 {
-                    _CLASS_NAMES: [INPUT, FORM],
-                    _TEMPLATE: '<form class="{c form}"><input class="{c input}" value="{p value}" /><\/form>'
+                    _CLASS_NAMES: [INPUT, FORM, 'hyphe-nated'],
+                    _TEMPLATE: '<form class="{c form}"><input class="{c input}" value="{p value}" /><input class="{c hyphe-nated}" /><\/form>'
                 }
             );
-        },
-
-        tearDown : function () {
-            mn.destroy();
-            testNode.setContent('');
-            MN = mn = null;
-        },
-        testNodesGetTheirClasses : function () {
             mn = new MN();
             mn.render(testNode);
             A.areEqual('yui3-makenodetest-input',mn._classNames[INPUT]);
             A.areEqual('yui3-makenodetest-form',mn._classNames[FORM]);
+            A.areEqual('yui3-makenodetest-hyphe-nated',mn._classNames['hyphe-nated']);
             A.isTrue(mn._inputNode.hasClass('yui3-makenodetest-input'));
             A.isTrue(mn._formNode.hasClass('yui3-makenodetest-form'));
+            A.isTrue(mn._hypheNatedNode.hasClass('yui3-makenodetest-hyphe-nated'));
+            A.areEqual(5,mn._inputNode.get(VALUE));
+        },
+        testStdModGetTheirClasses : function () {
+            MN = new Y.Base.create(
+                'MakeNodeTest',
+                Y.Widget,
+                [Y.MakeNode, Y.WidgetStdMod],
+                {
+                    renderUI: function () {
+                        this.set('bodyContent', this._makeNode());
+                        this._locateNodes();
+                    },
+                    value: 5
+                },
+                {
+                    _CLASS_NAMES: [INPUT, FORM, 'hyphe-nated'],
+                    _TEMPLATE: '<form class="{c form}"><input class="{c input}" value="{p value}" /><input class="{c hyphe-nated}" /><\/form>'
+                }
+            );
+            mn = new MN();
+            mn.render(testNode);
+            A.areEqual('yui3-makenodetest-input',mn._classNames[INPUT]);
+            A.areEqual('yui3-makenodetest-form',mn._classNames[FORM]);
+            A.areEqual('yui3-makenodetest-hyphe-nated',mn._classNames['hyphe-nated']);
+            A.areEqual('yui3-widget-bd',mn._classNames['BODY']);
+            A.isTrue(mn._inputNode.hasClass('yui3-makenodetest-input'));
+            A.isTrue(mn._formNode.hasClass('yui3-makenodetest-form'));
+            A.isTrue(mn._hypheNatedNode.hasClass('yui3-makenodetest-hyphe-nated'));
+            A.areSame(mn._BODYNode, mn.getStdModNode('body'));
+            A.areSame(mn._BODYNode.one('.' + mn._classNames[FORM]), mn._formNode );
+            A.areEqual(5,mn._inputNode.get(VALUE));
+        },
+        testLocateOnlySomeNodes : function () {
+            MN = Y.Base.create(
+                'MakeNodeTest',
+                Y.Widget,
+                [Y.MakeNode],
+                {
+                    renderUI: function () {
+                        this.get(CBX).append(this._makeNode());
+                        this._locateNodes(INPUT);
+                    },
+                    value: 5
+                },
+                {
+                    _CLASS_NAMES: [INPUT, FORM, 'hyphe-nated'],
+                    _TEMPLATE: '<form class="{c form}"><input class="{c input}" value="{p value}" /><input class="{c hyphe-nated}" /><\/form>'
+                }
+            );
+            mn = new MN();
+            mn.render(testNode);
+            A.areEqual('yui3-makenodetest-input',mn._classNames[INPUT]);
+            A.areEqual('yui3-makenodetest-form',mn._classNames[FORM]);
+            A.areEqual('yui3-makenodetest-hyphe-nated',mn._classNames['hyphe-nated']);
+            A.isTrue(mn._inputNode.hasClass('yui3-makenodetest-input'));
+            A.isUndefined(mn._formNode);
             A.areEqual(5,mn._inputNode.get(VALUE));
         }
     }));
@@ -223,6 +292,7 @@ YUI.add('makenode-tests', function(Y) {	Y.Test.Runner.add(suite);
                     buttonClicked: false,
                     inputValueChanged: false,
                     delegatedButtonClick: false,
+                    onDirectionKey: false,
                     _afterInputChange: function (ev) {
                         this.inputChanged = true;
                     },
@@ -234,13 +304,24 @@ YUI.add('makenode-tests', function(Y) {	Y.Test.Runner.add(suite);
                     },
                     _delegateButtonClick: function (ev) {
                         this.delegatedButtonClick = true;
+                    },
+                    _onDirectionKey: function (ev) {
+                        this.onDirectionKey = true;
                     }
                 },
                 {
                     _CLASS_NAMES: [INPUT, FORM, BUTTON],
                     _TEMPLATE: '<input class="{c input}" value="{p value}" /><button class="{c button}">Ok<\/button>',
                     _EVENTS: {
-                        input: ['change','valueChange'],
+                        input: [
+                            'change',
+                            'valueChange',
+                            {
+                                type: 'key',
+                                fn:'_onDirectionKey',
+                                args:"38, 40, 33, 34"
+                            }
+                        ],
                         button: [
                             {type: 'click', fn: '_afterClick'},
                             {type: 'click', when: 'delegate'}
@@ -261,14 +342,17 @@ YUI.add('makenode-tests', function(Y) {	Y.Test.Runner.add(suite);
             mn.render(testNode);
             mn._inputNode.simulate('change');
             mn._buttonNode.simulate('click');
+            mn._inputNode.simulate("keypress", { keyCode: 38 });
             A.isTrue(mn.inputChanged, 'inputChanged');
             A.isTrue(mn.buttonClicked, 'buttonClicked');
             A.isTrue(mn.delegatedButtonClick, 'delegatedButtonClick');
+            A.isTrue(mn.onDirectionKey, 'onDirectionKey');
+            mn._inputNode.focus();
             mn._inputNode.focus();
             mn._inputNode.set('value','whatever');
             this.wait(function () {
                 A.isTrue(mn.inputValueChanged, 'inputValueChanged');
-            },100);
+            },200);
         }
 
     }));
@@ -592,11 +676,86 @@ YUI.add('makenode-tests', function(Y) {	Y.Test.Runner.add(suite);
             mnOther.destroy();
             mn.destroy();
             mn = MN = MNOther = null;
+        },
+        testBadlyNestedObjects: function () {
+            MN = Y.Base.create(
+                'MakeNodeTest',
+                Y.Widget,
+                [Y.MakeNode],
+                {
+                    prop: null
+                },
+                {
+                    _TEMPLATE: '{n p prop @ attr x}'
+                }
+            );
+            var MNOther = Y.Base.create(
+                'other',
+                Y.Base,
+                [],
+                {
+                },
+                {
+                    ATTRS: {
+                        attr: {
+                            value: 'works'
+                        }
+                    }
+                }
+            );
+            var mnOther = new MNOther();
+            mn = new MN();
+            mn.prop = mnOther;
+            mn.render(testNode);
+            A.areEqual('{n p prop @ attr x}', testNode.one('.' + mn._classNames['content']).get('innerHTML'));
+            mnOther.destroy();
+            mn.destroy();
+            mn = MN = MNOther = null;
+        }
+    }));
+    suite.add(new Y.Test.Case({
+        name: 'test _PUBLISH',
+        testPublish: function () {
+            var count = 0;
+            MN = Y.Base.create(
+                'MakeNodeTest',
+                Y.Widget,
+                [Y.MakeNode],
+                {
+                    worked: false,
+                    _defSomeEventFn: function () {
+                        this.worked = true;
+                    }
+                },
+                {
+                    _TEMPLATE: '  ',
+                    _PUBLISH: {
+                        someEvent: {
+                            defaultFn: '_defSomeEventFn',
+                            fireOnce:true
+                        }
+                    }
+                }
+            );
+            mn = new MN();
+            mn.render(testNode);
+            mn.after('someEvent', function (ev) {
+                A.areEqual('MakeNodeTest:someEvent', ev.type);
+                count++;
+            });
+            A.isFalse(mn.worked);
+            A.areEqual(0, count);
+            mn.fire('someEvent');
+            A.isTrue(mn.worked);
+            A.areEqual(1, count);
+            mn.fire('someEvent');
+            A.areEqual(1, count);
         }
     }));
 
 
 
+
     Y.Test.Runner.add(suite);
 
-},'', { requires: ['node','base', 'widget', 'gallery-makenode','test', 'console','node-event-simulate', 'event-valuechange' ] });
+},'', { requires: ['node','base', 'widget', 'gallery-makenode','test', 'console','node-event-simulate', 'event-valuechange', 'widget-stdmod', 'event-key' ] });

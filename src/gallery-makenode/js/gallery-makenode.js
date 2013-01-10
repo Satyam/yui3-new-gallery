@@ -15,8 +15,8 @@ Developers using MakeNode should use only those marked protected.
         BBX = 'boundingBox',
         Lang = Y.Lang,
         DUPLICATE = ' for "{name}" defined in class {recentDef} also defined in class {prevDef}',
-        bracesRegExp = /\{\s* ([^{}]+)\s* \}/g,
-        parsingRegExp = /^(?:([ \t]+)|("[^"\\]* (?:\\.[^"\\]* )* ")|(true)|(false)|(null)|([\-+]?[0-9]* (?:\.[0-9]+)?))/,
+        bracesRegExp = /\{\s*([^{}]+)\s*\}/g,
+        parsingRegExp = /^(?:([ \t]+)|("[^"\\]*(?:\\.[^"\\]*)*")|(true)|(false)|(null)|([\-+]?[0-9]*(?:\.[0-9]+)?))/,
         quotesRegExp = /\\"/g,
 
         /**
@@ -119,7 +119,7 @@ Developers using MakeNode should use only those marked protected.
                     key = args.shift();
                     fn = this._templateHandlers[key.toLowerCase()];
                     if (!fn) {
-                        return;
+                        return undefined;
                     }
                     value =  fn.call(value, args.shift(), extras);
                 }
@@ -237,9 +237,10 @@ Developers using MakeNode should use only those marked protected.
         _substitute: function (template, extras) {
             var self = this,
                 subs = function (s, count) {
-                    var args = null, index, fn;
                     s = s.replace(bracesRegExp, function(match, token) {
-                        index = token.indexOf(' ');
+                        var args = null,
+                            index = token.indexOf(' '),
+                            fn, value;
                         if (index > -1) {
                             args = token.substring(index + 1);
                             token = token.substring(0, index);
@@ -247,10 +248,15 @@ Developers using MakeNode should use only those marked protected.
                         if (args) {
                             fn = self._templateHandlers[token.toLowerCase()];
                             if (fn) {
-                                return fn.call(self, args, extras);
+                                value = fn.call(self, args, extras);
                             }
+                        } else {
+                            value = extras[token];
                         }
-                        return (token in extras? extras[token] : match);
+                        if (value === undefined) {
+                            value = match;
+                        }
+                        return value;
 
                     });
                     if (count && s.indexOf('{') > -1) {
@@ -487,21 +493,21 @@ Developers using MakeNode should use only those marked protected.
     * `{@ attributeName}` configuration attribute values
     * `{p propertyName}` instance property values
     * `{m methodName arg1 arg2 ....}` return value from instance method.
-    The `m` code should be followed by the
-    method name and any number of arguments. The
-    placeholder is replaced by the return value or the named method.
+      The `m` code should be followed by the
+      method name and any number of arguments. The
+      placeholder is replaced by the return value or the named method.
     * `{c classNameKey}` CSS className generated from the <a href="#property__CLASS_NAMES">`_CLASS_NAMES`</a>
-    static property
+      static property
     * `{s key}` string from the `strings` attribute, using `key`    as the sub-attribute.
     * `{? arg1 arg2 arg3}` If arg1 evaluates to true it returns arg2 otherwise arg3.
-    Argument arg1 is usually a nested placeholder.
+      Argument arg1 is usually a nested placeholder.
     * `{1 arg1 arg2 arg3}` If arg1 is 1 it returns arg2 otherwise arg3. Used to produce singular/plural text.
-    Argument arg1 is usually a nested placeholder.
+      Argument arg1 is usually a nested placeholder.
     * `{n p1 arg1 .... pn argn}` It will read the value resulting from the processing code
-    `p1` with argument `arg1`
-    and use that as the object to process the following processing code.
-    It takes any number of processing codes and arguments.
-    It only works with processing codes that take simple identifiers as arguments, ie.: not {m}.
+      `p1` with argument `arg1`
+      and use that as the object to process the following processing code.
+      It takes any number of processing codes and arguments.
+      It only works with processing codes that take simple identifiers as arguments, ie.: not {m}.
     * `{}` any other value will be    handled just like `Y.substitute` does.
 
 

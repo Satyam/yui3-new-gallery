@@ -13,7 +13,7 @@
 			YUI({
 				filter: (window.location.search.match(/[?&]filter=([^&]+)/) || [])[1] || 'raw',
 				coverage:['gallery-makenode']
-			}).use('gallery-makenode', 'makenode-tests', 'test','test-console','node-event-simulate', 'widget', 'event-valuechange', function (Y) {
+			}).use('gallery-makenode', 'makenode-tests', 'test','test-console','node-event-simulate', 'widget', 'event-valuechange', 'widget-stdmod', 'event-key', function (Y) {
 				(new Y.Test.Console()).render('#log');
 
                 Y.Test.Runner.setName('gallery-makenode');
