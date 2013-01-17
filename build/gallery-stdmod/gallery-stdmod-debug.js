@@ -72,4 +72,4 @@ StdMod.prototype = {
 Y.StdMod = Y.mix(StdMod, WStdMod, false, undefined, 2);
 
 
-}, '@VERSION@');
+}, '@VERSION@', {"requires": ["widget-stdmod"]});
