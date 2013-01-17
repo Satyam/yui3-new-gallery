@@ -200,4 +200,13 @@ Y.ButtonGroup = Y.Base.create(
 );
 
 
-}, '@VERSION@');
+}, '@VERSION@', {
+    "requires": [
+        "base-base",
+        "widget-parent",
+        "widget-child",
+        "gallery-makenode",
+        "gallery-md-button"
+    ],
+    "skinnable": true
+});
